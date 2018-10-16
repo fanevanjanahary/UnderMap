@@ -67,7 +67,7 @@ class UnderMap:
         # Create the dialog (after translation) and keep reference
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
-        self.initialisePDF = InitialisePDF()
+        #self.initialisePDF = InitialisePDF()
 
         # Initialise buttton
         self.init_button = QToolButton()

@@ -22,17 +22,23 @@
  ***************************************************************************/
 """
 
+import logging
 from os.path import dirname, join, exists, isfile
 
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QToolButton, QMenu
+from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog
 
 # Initialize Qt resources from file resources.py
 # from .resources import *
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.ajouter_operateur_dialog import AjouterOperateurDialog
+from .utilities.utilities import Util
+from qgis.core import QgsProject
+
+
+LOGGER = logging.getLogger('Undermap')
 
 
 class UnderMap:
@@ -67,7 +73,8 @@ class UnderMap:
         # Create the dialog (after translation) and keep reference
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
-        #self.initialisePDF = InitialisePDF()
+        self.initialisepdf = Util()
+
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -130,7 +137,7 @@ class UnderMap:
             self.iface.mainWindow())
 
         # actions dialogs
-        self.initialisePDFAction.triggered.connect(self.run)
+        self.initialisePDFAction.triggered.connect(self.initialisePDF)
         self.ajouterOperateurAction.triggered.connect(self.addOperateur)
 
         # add actions on menu
@@ -150,7 +157,7 @@ class UnderMap:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
-        self.iface.removeToolBarIcon(self.init_button)
+        self.iface.mainWindow().removeToolBar(self.toolbar)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -169,5 +176,15 @@ class UnderMap:
         result = self.addop.exec_()
 
     def initialisePDF(self):
+        project_path = QgsProject.instance().readPath("./")
+        dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
+        self.initialisepdf.createGroupe(dirSelected)
+
+
+
+
+
+
+
 
 

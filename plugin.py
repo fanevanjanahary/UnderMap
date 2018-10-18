@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.ajouter_operateur_dialog import AjouterOperateurDialog
-from .utilities.utilities import Util
+from .utilities.utilities import createGroupe
 from qgis.core import QgsProject
 
 
@@ -73,7 +73,7 @@ class UnderMap:
         # Create the dialog (after translation) and keep reference
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
-        self.initialisepdf = Util()
+
 
 
         # Initialise buttton
@@ -178,7 +178,7 @@ class UnderMap:
     def initialisePDF(self):
         project_path = QgsProject.instance().readPath("./")
         dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
-        self.initialisepdf.createGroupe(dirSelected)
+        createGroupe(dirSelected)
 
 
 

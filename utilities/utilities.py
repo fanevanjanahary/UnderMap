@@ -8,7 +8,9 @@ sub_groupe_reseau = ['RSX', 'TIF', 'BUF']
 sous_d_operateur = ['PDF','SHP', 'TIF']
 project_path = QgsProject.instance().readPath("./")
 shape_path = dirname(__file__).replace('utilities','resources/shape')
-racine = os.path.join(project_path,'RSX----')
+qml_path = dirname(__file__).replace('utilities','resources/qml')
+racine = os.path.join(project_path,'RSX')
+sub_pdf = ['A-TRAITER', 'IGNORE', 'UTILE']
 
 #copy shape file at operator dir
 def copy_file(from_dir, to_dir):
@@ -16,7 +18,15 @@ def copy_file(from_dir, to_dir):
         file = os.path.join(from_dir, item)
         shutil.copy(file,to_dir)
 
-# les sous dossier
+# rename file
+def rename_file(dir,name):
+    for item in os.listdir(dir):
+        extension = os.path.splitext(item)[1]
+        new_filename = name+extension
+        os.rename(os.path.join(dir,item),os.path.join(dir, new_filename))
+
+
+# les sous operator_folder_namesier
 def create_operartors_subdir(from_operateur_brute):
     for item in get_operator(from_operateur_brute):
         operateur_dir = os.path.join(from_operateur_brute, item)
@@ -25,11 +35,22 @@ def create_operartors_subdir(from_operateur_brute):
                 os.makedirs(os.path.join(racine,item,item_sous_d))
                 if item_sous_d == 'SHP':
                     copy_file(shape_path, os.path.join(racine,item,item_sous_d))
+                    rename_file(os.path.join(racine,item,item_sous_d),item)
                 elif item_sous_d == 'PDF':
-                    copy_file(operateur_dir, os.path.join(racine,item,item_sous_d))
+                    for root, dirs, files in os.walk(operateur_dir):
+                        for file in files:
+                            if file.endswith(".pdf"):
+                                pdf_from_brute = root + os.sep
+                                copy_file(pdf_from_brute, os.path.join(racine,item,item_sous_d))
+                    for item_sous_pdf in sub_pdf:
+                        sous_pdf = os.path.join(racine,item,item_sous_d,item_sous_pdf)
+                        os.makedirs(sous_pdf)
+        else:
+            pass
+
                     
 
-#Crée les dossier
+#Crée les operator_folder_namesier
 def create_operators_dir(from_operateur_brute):
     if not os.path.exists(racine):
         os.makedirs(racine)
@@ -37,13 +58,13 @@ def create_operators_dir(from_operateur_brute):
     else:
         create_operartors_subdir(from_operateur_brute)
 
-# Prendre les dossiers dans un chemin donné
+# Prendre les operator_folder_namesiers dans un chemin donné
 def get_operator(path_brute):
-    lesdos = []
+    lesoperator_folder_name = []
     for item in os.listdir(path_brute):
         if os.path.isdir(os.path.join(path_brute,item)):
-            lesdos.append(item)
-    return lesdos
+            lesoperator_folder_name.append(item)
+    return lesoperator_folder_name
 
 # Convertir ListGroup en array
 def groupesToArray(chl):
@@ -70,11 +91,15 @@ def createGroupe(from_operateur_brute):
                     item.addGroup(s_item)
         for sr_item in item.children():
             if sr_item.name() == 'RSX':
-                for dos in get_operator(from_operateur_brute):
-                    layer = QgsVectorLayer(os.path.join(racine,dos,'SHP'), dos, "ogr")
-                    QgsProject.instance().addMapLayer(layer, False)
-                    if layer.isValid():
-                        sr_item.addLayer(layer)
+                for operator_folder_name in get_operator(from_operateur_brute):
+                    if operator_folder_name not in groupesToArray(sr_item):
+                        layer = QgsVectorLayer(os.path.join(racine,operator_folder_name,'SHP'), operator_folder_name, "ogr")
+                        QgsProject.instance().addMapLayer(layer, False)
+                        if layer.isValid():
+                            sr_item.addLayer(layer)
+                            layer.loadNamedStyle(os.path.join(qml_path,'line_style.qml'))
             elif sr_item.name() == 'TIF':
-                for dos in get_operator(from_operateur_brute):
-                    sr_item.addGroup(dos)
+
+                for operator_folder_name in get_operator(from_operateur_brute):
+                    if operator_folder_name not in groupesToArray(sr_item):
+                        sr_item.addGroup(operator_folder_name)

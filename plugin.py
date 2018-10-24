@@ -27,7 +27,7 @@ from os.path import dirname, join, exists, isfile
 
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog
+from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
 
 # Initialize Qt resources from file resources.py
 # from .resources import *
@@ -36,6 +36,7 @@ from .ui.undermap_dialog import UnderMapDialog
 from .ui.ajouter_operateur_dialog import AjouterOperateurDialog
 from .utilities.utilities import createGroupe
 from qgis.core import QgsProject
+
 
 
 LOGGER = logging.getLogger('Undermap')
@@ -135,10 +136,12 @@ class UnderMap:
             QIcon(join(dirname(__file__), 'resources', 'vectorisation.png')),
             'Vectorisation',
             self.iface.mainWindow())
+        self.vectorisationAction.setEnabled(False)
 
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialisePDF)
         self.ajouterOperateurAction.triggered.connect(self.addOperateur)
+        self.vectorisationAction.triggered.connect(self.editLayer)
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
@@ -179,6 +182,16 @@ class UnderMap:
         project_path = QgsProject.instance().readPath("./")
         dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
         createGroupe(dirSelected)
+        self.vectorisationAction.setEnabled(True)
+
+    def editLayer(self):
+        layer = self.iface.activeLayer()
+        if layer == None:
+            QMessageBox.warning(None,"Avertisment","Veulliez selectionner une couche")
+        else:
+            layer.startEditing()
+            self.iface.messageBar().pushInfo(u'UnderMap:', u'Vous pouvez commencer à véctoriser maintenant')
+
 
 
 

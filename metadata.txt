@@ -9,12 +9,12 @@
 [general]
 name=Undermap
 qgisMinimumVersion=3.0
-description=Plugin de Futurmap pour le traitement des réseaux enterrés
+description= Véctorisation des réseaux enterrés
 version=0.1
 author=Futurmap
 email=fanevanjanahary@gmail.com
 
-about=Pour traiter les réseaux enterrés
+about=Plugin de Futurmap pour la préparation de la véctorisation des réseaux enterrés
 
 tracker=http://bugs
 repository=http://repo

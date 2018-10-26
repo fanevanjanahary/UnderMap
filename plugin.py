@@ -34,8 +34,8 @@ from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBo
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.ajouter_operateur_dialog import AjouterOperateurDialog
-from .utilities.utilities import createGroupe
-from qgis.core import QgsProject
+from .utilities.utilities import (initialise_PDF, initialise_FDP, get_project_path, initialise_Emprise)
+
 
 
 
@@ -90,12 +90,11 @@ class UnderMap:
         self.actions = None
         self.initialisePDFAction = None
         self.operateursAction = None
-        self.vectorisationAction = None
         self.modificationAction = None
         self.rapportAction = None
         self.ajouterOperateurAction = None
         self.initialiseFDPAction = None
-        self.initialiseemprise = None
+        self.initialiseEmpriseAction = None
 
 
     # noinspection PyMethodMayBeStatic
@@ -132,29 +131,39 @@ class UnderMap:
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
             'Opérateurs',
             self.iface.mainWindow())
-        self.vectorisationAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'vectorisation.png')),
-            'Vectorisation',
+
+        self.initialiseFDPAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Initialises FDP',
             self.iface.mainWindow())
-        self.vectorisationAction.setEnabled(False)
+
+        self.initialiseEmpriseAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Initialises Emprise',
+            self.iface.mainWindow())
 
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialisePDF)
         self.ajouterOperateurAction.triggered.connect(self.addOperateur)
-        self.vectorisationAction.triggered.connect(self.editLayer)
+        self.initialiseFDPAction.triggered.connect(self.initialiseFDP)
+        self.initialiseEmpriseAction.triggered.connect(self.initialiseEmprise)
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
         self.init_button.menu().addAction(self.ajouterOperateurAction)
         self.init_button.setDefaultAction(self.initialisePDFAction)
+        # add separator
+        # self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
+        self.init_button.menu().addAction(self.initialiseFDPAction)
+        self.init_button.menu().addAction(self.initialiseEmpriseAction)
 
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
         self.toolbar.addAction(self.operateursAction)
         self.toolbar.addAction(self.initialisePDFAction)
-        self.toolbar.addAction(self.vectorisationAction)
 
+        
 
 
 
@@ -179,18 +188,41 @@ class UnderMap:
         result = self.addop.exec_()
 
     def initialisePDF(self):
-        project_path = QgsProject.instance().readPath("./")
-        dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
-        createGroupe(dirSelected)
-        self.vectorisationAction.setEnabled(True)
-
-    def editLayer(self):
-        layer = self.iface.activeLayer()
-        if layer == None:
-            QMessageBox.warning(None,"Avertisment","Veulliez selectionner une couche")
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
+            return
         else:
-            layer.startEditing()
-            self.iface.messageBar().pushInfo(u'UnderMap:', u'Vous pouvez commencer à véctoriser maintenant')
+            dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
+            if dirSelected == '' :
+                return
+            else:
+                initialise_PDF(dirSelected)
+
+    def initialiseFDP(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
+            return
+        else:
+            fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.dxf")
+            if fileSelected == ('', ''):
+                return
+            else:
+                initialise_FDP(fileSelected)
+
+    def initialiseEmprise(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
+            return
+        else:
+            fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.kml")
+            if fileSelected == ('', ''):
+                return
+            else:
+                initialise_Emprise(fileSelected)
+
 
 
 

@@ -1,22 +1,30 @@
 # coding=utf-8
 import os, shutil
 from os.path import dirname
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter
+
 
 project_groupe = ['Reseau', 'Fond-Plan', 'Impression']
 sub_groupe_reseau = ['RSX', 'TIF', 'BUF']
 sous_d_operateur = ['PDF','SHP', 'TIF']
-project_path = QgsProject.instance().readPath("./")
 shape_path = dirname(__file__).replace('utilities','resources/shape')
 qml_path = dirname(__file__).replace('utilities','resources/qml')
-racine = os.path.join(project_path,'RSX')
 sub_pdf = ['A-TRAITER', 'IGNORE', 'UTILE']
+
+# get project path
+def get_project_path():
+    project_path = QgsProject.instance().readPath("./")
+    return project_path
+
 
 #copy shape file at operator dir
 def copy_file(from_dir, to_dir):
-    for item in os.listdir(from_dir):
-        file = os.path.join(from_dir, item)
-        shutil.copy(file,to_dir)
+    if os.path.isfile(from_dir):
+        shutil.copy(from_dir,to_dir)
+    else:
+        for item in os.listdir(from_dir):
+            file = os.path.join(from_dir, item)
+            shutil.copy(file,to_dir)
 
 # rename file
 def rename_file(dir,name):
@@ -25,9 +33,17 @@ def rename_file(dir,name):
         new_filename = name+extension
         os.rename(os.path.join(dir,item),os.path.join(dir, new_filename))
 
+# create directory
+def create_dir(dir_path,dir_name):
+    new_dir = os.path.join(dir_path,dir_name)
+    if not os.path.exists(new_dir):
+        os.makedirs(new_dir)
+
 
 # les sous operator_folder_namesier
 def create_operartors_subdir(from_operateur_brute):
+
+    racine = os.path.join(get_project_path(),'RSX')
     for item in get_operator(from_operateur_brute):
         operateur_dir = os.path.join(from_operateur_brute, item)
         if not os.path.exists(os.path.join(racine,item)):
@@ -47,18 +63,18 @@ def create_operartors_subdir(from_operateur_brute):
                         os.makedirs(sous_pdf)
         else:
             pass
-
                     
 
-#Crée les operator_folder_namesier
+# Crée les operator_folder_names
 def create_operators_dir(from_operateur_brute):
+    racine = os.path.join(get_project_path(),'RSX')
     if not os.path.exists(racine):
         os.makedirs(racine)
         create_operartors_subdir(from_operateur_brute)
     else:
         create_operartors_subdir(from_operateur_brute)
 
-# Prendre les operator_folder_namesiers dans un chemin donné
+# get the folder names from the path
 def get_operator(path_brute):
     lesoperator_folder_name = []
     for item in os.listdir(path_brute):
@@ -66,40 +82,91 @@ def get_operator(path_brute):
             lesoperator_folder_name.append(item)
     return lesoperator_folder_name
 
+# get groupe in qgis
+def get_groupe():
+    root = QgsProject.instance().layerTreeRoot()
+    return root
+
 # Convertir ListGroup en array
-def groupesToArray(chl):
+def groupes_to_array(chl):
         lesgro = []
         for item in chl.children():
             lesgro.append(item.name())
         return lesgro
 
 # Créer les groupe dans le projet QGIS
-def createGroupe(from_operateur_brute):
-    root = QgsProject.instance().layerTreeRoot()
-    print(shape_path)
-    # create folders
-    create_operators_dir(from_operateur_brute)
+def create_groupe(from_operators_brute):
+    racine = os.path.join(get_project_path(),'RSX')
     # add project group if it's not exist
     for g_item in project_groupe:
-        if g_item not in groupesToArray(root):
-            root.addGroup(g_item)
+        if g_item not in groupes_to_array(get_groupe()):
+            get_groupe().addGroup(g_item)
     # add sub group on Reseau
-    for item in root.children():
+    for item in get_groupe().children():
         if item.name() == 'Reseau':
             for s_item in sub_groupe_reseau:
-                if s_item not in groupesToArray(item):
+                if s_item not in groupes_to_array(item):
                     item.addGroup(s_item)
         for sr_item in item.children():
             if sr_item.name() == 'RSX':
-                for operator_folder_name in get_operator(from_operateur_brute):
-                    if operator_folder_name not in groupesToArray(sr_item):
+                for operator_folder_name in get_operator(from_operators_brute):
+                    if operator_folder_name not in groupes_to_array(sr_item):
                         layer = QgsVectorLayer(os.path.join(racine,operator_folder_name,'SHP'), operator_folder_name, "ogr")
-                        QgsProject.instance().addMapLayer(layer, False)
-                        if layer.isValid():
-                            sr_item.addLayer(layer)
-                            layer.loadNamedStyle(os.path.join(qml_path,'line_style.qml'))
+                        add_layer(layer,sr_item,qml_path)
             elif sr_item.name() == 'TIF':
-
-                for operator_folder_name in get_operator(from_operateur_brute):
-                    if operator_folder_name not in groupesToArray(sr_item):
+                for operator_folder_name in get_operator(from_operators_brute):
+                    if operator_folder_name not in groupes_to_array(sr_item):
                         sr_item.addGroup(operator_folder_name)
+
+
+# add layer in qgis groupe
+def add_layer (layer,  groupe, style_path):
+    QgsProject.instance().addMapLayer(layer, False)
+    if layer.isValid():
+        groupe.addLayer(layer)
+    if style_path is not None:
+        layer.loadNamedStyle(os.path.join(style_path,'line_style.qml'))
+
+
+# convert file to shp
+def save_as_shp(file_to_convert, shp_path, crs):
+    if file_to_convert.isValid():
+        writer = QgsVectorFileWriter.writeAsVectorFormat(file_to_convert, shp_path ,"utf-8", crs,"ESRI Shapefile")
+        return 1
+
+
+# initialise PDF
+def initialise_PDF(operators_dir):
+    # create folders
+    create_operators_dir(operators_dir)
+    create_groupe(operators_dir)
+
+
+# initialise Fond de plan
+def initialise_FDP(dxf_file):
+    create_dir(get_project_path(),'FDP/SHP')
+    copy_file(dxf_file[0],os.path.join(get_project_path(),'FDP'))
+    if get_groupe().findGroup("Fond-Plan") is None :
+        get_groupe().addGroup("Fond-Plan")
+    shp_path = os.path.join(get_project_path(),'FDP/SHP',os.path.basename(dxf_file[0].replace('dxf','shp')))
+    dxf_info = "|layername=entities|geometrytype=LineString"
+    layer_name = os.path.basename(dxf_file[0]).split('.')[0]
+    dxf_vl = QgsVectorLayer(dxf_file[0]+dxf_info, layer_name, "ogr")
+    if save_as_shp(dxf_vl, shp_path, dxf_vl.crs()) == 1:
+        layer = QgsVectorLayer(shp_path,  layer_name)
+        add_layer(layer, get_groupe().findGroup("Fond-Plan"),None)
+
+# initialise Emprise
+def initialise_Emprise(kml_file):
+    create_dir(get_project_path(),'FDP/SHP')
+    copy_file(kml_file[0],os.path.join(get_project_path(),'FDP'))
+    if get_groupe().findGroup("Fond-Plan") is None :
+        get_groupe().addGroup("Fond-Plan")
+    shp_path = os.path.join(get_project_path(),'FDP/SHP',os.path.basename(kml_file[0].replace('kml','shp')))
+    layer_name = os.path.basename(kml_file[0]).split('.')[0]
+    dxf_vl = QgsVectorLayer(kml_file[0], layer_name, "ogr")
+    if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()) == 1:
+        layer = QgsVectorLayer(shp_path,  layer_name)
+        add_layer(layer, get_groupe().findGroup("Fond-Plan"),None)
+
+

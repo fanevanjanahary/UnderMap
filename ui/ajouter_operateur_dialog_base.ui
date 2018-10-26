@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>305</height>
+    <height>268</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QDialogButtonBox" name="buttonOperateur">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>0</x>
      <y>200</y>
      <width>341</width>
      <height>32</height>
@@ -33,7 +33,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>80</y>
+     <y>70</y>
      <width>101</width>
      <height>21</height>
     </rect>
@@ -46,33 +46,61 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>140</y>
+     <y>110</y>
      <width>101</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Selectionnez les PDF:</string>
+    <string>Selectionnez le PDF:</string>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="sectionnePDF">
+  <widget class="QgsFileWidget" name="sectionnePDF" native="true">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>130</y>
-     <width>315</width>
+     <x>150</x>
+     <y>100</y>
+     <width>320</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QgsFilterLineEdit" name="mLineEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>70</y>
+     <width>320</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="qgisRelation" stdset="0">
+    <string notr="true"/>
    </property>
   </widget>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QgsFilterLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qgsfilterlineedit.h</header>
+  </customwidget>
   <customwidget>
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>mLineEdit</tabstop>
+  <tabstop>buttonOperateur</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -82,12 +110,12 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>228</x>
+     <y>231</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
-     <y>274</y>
+     <y>267</y>
     </hint>
    </hints>
   </connection>
@@ -98,12 +126,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>296</x>
+     <y>231</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
-     <y>274</y>
+     <y>267</y>
     </hint>
    </hints>
   </connection>

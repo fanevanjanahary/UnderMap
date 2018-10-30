@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBo
 # from .resources import *
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
-from .ui.ajouter_operateur_dialog import AjouterOperateurDialog
+from .ui.add_operator_dialog import AjouterOperateurDialog
 from .utilities.utilities import (initialise_PDF, initialise_FDP, get_project_path, initialise_Emprise)
 
 

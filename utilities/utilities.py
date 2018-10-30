@@ -40,39 +40,33 @@ def create_dir(dir_path,dir_name):
         os.makedirs(new_dir)
 
 
-# les sous operator_folder_namesier
-def create_operartors_subdir(from_operateur_brute):
-
-    racine = os.path.join(get_project_path(),'RSX')
-    for item in get_operator(from_operateur_brute):
-        operateur_dir = os.path.join(from_operateur_brute, item)
-        if not os.path.exists(os.path.join(racine,item)):
-            for item_sous_d in sous_d_operateur:
-                os.makedirs(os.path.join(racine,item,item_sous_d))
-                if item_sous_d == 'SHP':
-                    copy_file(shape_path, os.path.join(racine,item,item_sous_d))
-                    rename_file(os.path.join(racine,item,item_sous_d),item)
-                elif item_sous_d == 'PDF':
-                    for root, dirs, files in os.walk(operateur_dir):
-                        for file in files:
-                            if file.endswith(".pdf"):
-                                pdf_from_brute = root + os.sep
-                                copy_file(pdf_from_brute, os.path.join(racine,item,item_sous_d))
-                    for item_sous_pdf in sub_pdf:
-                        sous_pdf = os.path.join(racine,item,item_sous_d,item_sous_pdf)
-                        os.makedirs(sous_pdf)
-        else:
-            pass
-                    
-
-# Crée les operator_folder_names
-def create_operators_dir(from_operateur_brute):
+#create operator
+def create_operator(name, pdf):
     racine = os.path.join(get_project_path(),'RSX')
     if not os.path.exists(racine):
         os.makedirs(racine)
-        create_operartors_subdir(from_operateur_brute)
+    if not os.path.exists(os.path.join(racine,name)):
+            for item_sous_d in sous_d_operateur:
+                os.makedirs(os.path.join(racine,name,item_sous_d))
+                if item_sous_d == 'SHP':
+                    #shp_to = os.path.join(racine,item,item_sous_d)
+                    #default_layer = QgsVectorLayer(shape_path, item, "ogr")
+                    #save_as_shp(default_layer, shp_to , QgsProject.instance().crs())
+                    copy_file(shape_path, os.path.join(racine,name,item_sous_d))
+                    rename_file(os.path.join(racine,name,item_sous_d),name)
+                elif item_sous_d == 'PDF':
+                    for root, dirs, files in os.walk(pdf):
+                        for file in files:
+                            if file.endswith(".pdf"):
+                                pdf_from_brute = root + os.sep
+                                copy_file(pdf_from_brute, os.path.join(racine,name,item_sous_d))
+                    for item_sous_pdf in sub_pdf:
+                        sous_pdf = os.path.join(racine,name,item_sous_d,item_sous_pdf)
+                        os.makedirs(sous_pdf)
     else:
-        create_operartors_subdir(from_operateur_brute)
+        pass
+
+
 
 # get the folder names from the path
 def get_operator(path_brute):
@@ -136,10 +130,12 @@ def save_as_shp(file_to_convert, shp_path, crs):
 
 
 # initialise PDF
-def initialise_PDF(operators_dir):
+def initialise_PDF(from_operateur_brute):
     # create folders
-    create_operators_dir(operators_dir)
-    create_groupe(operators_dir)
+    for item in get_operator(from_operateur_brute):
+        operateur_dir = os.path.join(from_operateur_brute, item)
+        create_operator(item, operateur_dir)
+    create_groupe(from_operateur_brute)
 
 
 # initialise Fond de plan

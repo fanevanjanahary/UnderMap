@@ -7,17 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>268</height>
+    <height>178</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string notr="true">Ajout opérateur</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonOperateur">
+  <widget class="QDialogButtonBox" name="button_add_operator">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>200</y>
+     <x>130</x>
+     <y>120</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -29,11 +29,11 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="label_name_opertor">
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>70</y>
+     <y>30</y>
      <width>101</width>
      <height>21</height>
     </rect>
@@ -42,11 +42,11 @@
     <string>Nom de l'opérateur: </string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="label_select_pdf">
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>110</y>
+     <y>70</y>
      <width>101</width>
      <height>16</height>
     </rect>
@@ -55,29 +55,29 @@
     <string>Selectionnez le PDF:</string>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="sectionnePDF" native="true">
+  <widget class="QgsFileWidget" name="select_pdf_action">
    <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>100</y>
+     <y>60</y>
      <width>320</width>
-     <height>30</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QgsFilterLineEdit" name="mLineEdit">
+  <widget class="QgsFilterLineEdit" name="operator_name">
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>70</y>
+     <y>30</y>
      <width>320</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="qgisRelation" stdset="0">
@@ -87,24 +87,24 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QgsFilterLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>qgsfilterlineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
   </customwidget>
+  <customwidget>
+   <class>QgsFilterLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qgsfilterlineedit.h</header>
+  </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>mLineEdit</tabstop>
-  <tabstop>buttonOperateur</tabstop>
+  <tabstop>operator_name</tabstop>
+  <tabstop>button_add_operator</tabstop>
  </tabstops>
  <resources/>
  <connections>
   <connection>
-   <sender>buttonOperateur</sender>
+   <sender>button_add_operator</sender>
    <signal>accepted()</signal>
    <receiver>DialogAjoutOperateur</receiver>
    <slot>accept()</slot>
@@ -120,7 +120,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>buttonOperateur</sender>
+   <sender>button_add_operator</sender>
    <signal>rejected()</signal>
    <receiver>DialogAjoutOperateur</receiver>
    <slot>reject()</slot>

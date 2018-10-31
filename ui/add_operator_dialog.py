@@ -5,8 +5,8 @@ import os
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox
-from Undermap.utilities.resources import get_ui_class
-# from Undermap.utilities.utilities import create_operator
+from UnderMap.utilities.resources import get_ui_class
+from UnderMap.process import create_operator
 
 FORM_CLASS = get_ui_class('add_operator_dialog_base.ui')
 
@@ -40,9 +40,10 @@ class AjouterOperateurDialog(QDialog, FORM_CLASS):
 
     def accept(self):
         """Method invoked when OK button is clicked."""
-        self.operator_name.value()
-        self.select_pdf_action.filePath()
-        QMessageBox.warning(None,"Avertisment",self.select_pdf_action.filePath())
+        name_operator = self.operator_name.value().upper()
+        file_operator = self.select_pdf_action.filePath().split('" "')
+        create_operator(name_operator, file_operator)
+        #QMessageBox.warning(None,"Avertisment", file_operator)
         #self.iface.messageBar().pushInfo(u'My Plugin says', self.operator_name.value())
 
 

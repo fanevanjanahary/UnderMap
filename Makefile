@@ -40,7 +40,7 @@ SOURCES = \
 	__init__.py \
 	undermap.py undermap_dialog.py
 
-PLUGINNAME = undermap
+PLUGINNAME = UnderMap
 
 PY_FILES = \
 	__init__.py \

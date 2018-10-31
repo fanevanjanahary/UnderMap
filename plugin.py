@@ -34,12 +34,13 @@ from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBo
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
-from .utilities.utilities import (initialise_PDF, initialise_FDP, get_project_path, initialise_Emprise)
+from .utilities.utilities import get_project_path
+from UnderMap.process import (initialise_PDF, initialise_FDP, initialise_Emprise)
 
 
 
 
-LOGGER = logging.getLogger('Undermap')
+LOGGER = logging.getLogger('UnderMap')
 
 
 class UnderMap:
@@ -119,7 +120,7 @@ class UnderMap:
         # the actions
         self.initialisePDFAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'initialpdf.png')),
-            'Initialises PDF',
+            'Initialiser PDF',
             self.iface.mainWindow())
 
         self.ajouterOperateurAction = QAction(
@@ -134,12 +135,12 @@ class UnderMap:
 
         self.initialiseFDPAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
-            'Initialises FDP',
+            'Initialiser un FDP',
             self.iface.mainWindow())
 
         self.initialiseEmpriseAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
-            'Initialises Emprise',
+            'Initialiser une emprise',
             self.iface.mainWindow())
 
         # actions dialogs
@@ -195,6 +196,7 @@ class UnderMap:
         else:
             dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
             if dirSelected == '' :
+                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun dossier séléctionné")
                 return
             else:
                 initialise_PDF(dirSelected)
@@ -207,6 +209,7 @@ class UnderMap:
         else:
             fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.dxf")
             if fileSelected == ('', ''):
+                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun fichier dxf séléctionné")
                 return
             else:
                 initialise_FDP(fileSelected)
@@ -219,6 +222,7 @@ class UnderMap:
         else:
             fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.kml")
             if fileSelected == ('', ''):
+                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun fichier kml séléctionné")
                 return
             else:
                 initialise_Emprise(fileSelected)

@@ -30,6 +30,7 @@ def initialise_PDF(from_operateur_brute):
     """
     for item in get_operator(from_operateur_brute):
         operateur_dir = join(from_operateur_brute, item)
+        print(operateur_dir)
         create_group(from_operateur_brute)
         create_operator(item, operateur_dir)
 
@@ -55,10 +56,10 @@ def create_operator(name, pdf):
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)
                 add_layer_in_group(layer, get_groupe().findGroup("RSX"), QML_PATH)
             elif item_operator_sub_dir == 'PDF':
-                copy_file(pdf, join(operator_dir, item_operator_sub_dir), ".pdf")
                 for item_sous_pdf in PDF_SUB_DIR:
                     sub_pdf = join(operator_dir, item_operator_sub_dir, item_sous_pdf)
                     os.makedirs(sub_pdf)
+                copy_file(pdf, join(operator_dir, item_operator_sub_dir), ".pdf")
     else:
         pass
 
@@ -81,7 +82,7 @@ def initialise_FDP(dxf_file):
         layer = QgsVectorLayer(shp_path,  layer_name)
         add_layer_in_group(layer, get_groupe().findGroup("Fond-Plan"),None)
 
-# initialise Emprise
+
 def initialise_Emprise(kml_file):
     """ Initialisation d'une emprise
 

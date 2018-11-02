@@ -1,7 +1,8 @@
 # coding=utf-8
-import os, shutil
-from os.path import isfile, dirname, join, isdir
+import os, shutil, typing
+from os.path import isfile, dirname, join, isdir, basename
 from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter
+from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
 PROJECT_GROUP = ['Reseau', 'Fond-Plan', 'Impression']
 RSX_SUB_GROUP = ['RSX', 'TIF', 'BUF']
@@ -33,15 +34,23 @@ def copy_file(from_dir, to_dir, file_type):
     :param file_type: Type du fichier à copier
     :type file_type: str
     """
-    for item_path in from_dir:
-        if isfile(item_path.replace('"', '')):
-            shutil.copy(item_path.replace('"', ''), to_dir)
-        else:
-            for root, dirs, files in os.walk(from_dir):
-                for file in files:
-                    if file.endswith(file_type):
-                        pdf_from_brute = root + os.sep
-                        shutil.copy(pdf_from_brute, to_dir)
+    pdf_treat = join(to_dir, 'A-TRAITER')
+    if  isinstance(from_dir, typing.List):
+        for item_path in from_dir:
+            if isfile(item_path.replace('"', '')):
+                shutil.copy(item_path.replace('"', ''), to_dir)
+                split_pdf(item_path, pdf_treat)
+    elif isdir(from_dir):
+        for root, dirs, files in os.walk(from_dir):
+            for file in files:
+                if file.endswith(file_type):
+                    pdf_from_brute = root + os.sep + file
+                    shutil.copy(pdf_from_brute, to_dir)
+                    split_pdf(pdf_from_brute, pdf_treat)
+    else:
+        if isfile(from_dir):
+            shutil.copy(from_dir, to_dir)
+            split_pdf(from_dir, pdf_treat)
 
 
 
@@ -91,7 +100,7 @@ def get_operator(path_brute):
             lesoperator_folder_name.append(item)
     return lesoperator_folder_name
 
-# get groupe in qgis
+
 def get_groupe():
     """  Retourne un groupe d'un projet QGIS
 
@@ -101,7 +110,7 @@ def get_groupe():
     root = QgsProject.instance().layerTreeRoot()
     return root
 
-# Convertir ListGroup en array
+
 def groupes_to_array(children):
     """ Convertition de ListGroupe en liste array
 
@@ -116,5 +125,23 @@ def groupes_to_array(children):
     return groups
 
 
+def split_pdf(pdf_file, to_dir):
+    """ Découpage par page d'un fichier pdf
 
+    :param pdf_file: Fichier à découper
+    :type: pdf_file: str
 
+    :param to_dir: le dossier pour sauvegarder les fichier àpres le découpage
+    :type to_dir: str
+    """
+    file_name = basename(pdf_file).split('.')[0]
+    to_dir = join(to_dir, file_name)
+    if pdf_file.endswith(".pdf"):
+        inputpdf = PdfFileReader(open(pdf_file, "rb"))
+        for i in range(inputpdf.numPages):
+            output = PdfFileWriter()
+            output.addPage(inputpdf.getPage(i))
+            with open(to_dir+ " %s.pdf" % '{:02}'.format(i+1), "wb") as outputStream:
+                output.write(outputStream)
+    else:
+        pass

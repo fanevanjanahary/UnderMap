@@ -25,9 +25,10 @@
 import logging
 from os.path import dirname, join, exists, isfile
 
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
+from qgis.core import QgsSettings
 
 # Initialize Qt resources from file resources.py
 # from .resources import *
@@ -92,6 +93,8 @@ class UnderMap:
         self.ajouterOperateurAction = None
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
+
+        QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
 
     @staticmethod
     def tr(message):

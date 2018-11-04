@@ -2007,7 +2007,7 @@
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <editform tolerant="1">C:/Futurmap/Outils/QGIS3/Pluging/Undermap/ui/form.ui</editform>
+  <editform tolerant="1"></editform>
   <editforminit/>
   <editforminitcodesource>0</editforminitcodesource>
   <editforminitfilepath></editforminitfilepath>

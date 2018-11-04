@@ -1,7 +1,7 @@
 # coding=utf-8
 import os, shutil, typing
 from os.path import isfile, dirname, join, isdir, basename
-from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter
+from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, QgsMessageLog
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
 PROJECT_GROUP = ['Reseau', 'Fond-Plan', 'Impression']
@@ -137,11 +137,18 @@ def split_pdf(pdf_file, to_dir):
     file_name = basename(pdf_file).split('.')[0]
     to_dir = join(to_dir, file_name)
     if pdf_file.endswith(".pdf"):
-        inputpdf = PdfFileReader(open(pdf_file, "rb"))
-        for i in range(inputpdf.numPages):
+        QgsMessageLog.logMessage('Découpage du PDF {}'.format(pdf_file), 'UnderMap', Qgis.Info)
+
+        pdf_in_file = open(pdf_file, 'rb')
+
+        inputpdf = PdfFileReader(pdf_in_file, strict=False)
+        pages_no = inputpdf.numPages
+
+        for i in range(pages_no):
+            inputpdf = PdfFileReader(pdf_in_file, strict=False)
             output = PdfFileWriter()
             output.addPage(inputpdf.getPage(i))
-            with open(to_dir+ " %s.pdf" % '{:02}'.format(i+1), "wb") as outputStream:
+            with open(to_dir + ' {:02}.pdf'.format(i+1), "wb") as outputStream:
                 output.write(outputStream)
-    else:
-        pass
+
+        pdf_in_file.close()

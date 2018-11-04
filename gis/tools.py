@@ -51,7 +51,7 @@ def add_layer_in_group (layer, group, style_path):
 # convert file to shp
 def save_as_shp(file_to_convert, shp_path, crs):
     if file_to_convert.isValid():
-        QgsVectorFileWriter.writeAsVectorFormat(file_to_convert, shp_path ,"utf-8", crs,"ESRI Shapefile")
+        QgsVectorFileWriter.writeAsVectorFormat(file_to_convert, shp_path, "utf-8", crs, "ESRI Shapefile")
         return True
     else:
         return False

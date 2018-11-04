@@ -35,7 +35,7 @@ rsx_def = {
 
 abandoned_def = {
     'name': 'Abandon',
-    'type': QVariant.Double,
+    'type': QVariant.Int,
     'length': 1,
     'precision': 0,
 }

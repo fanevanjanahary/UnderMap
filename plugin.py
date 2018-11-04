@@ -98,7 +98,6 @@ class UnderMap:
         self.initialiseEmpriseAction = None
 
 
-    # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -164,7 +163,6 @@ class UnderMap:
         self.toolbar.addAction(self.operateursAction)
         self.toolbar.addAction(self.initialisePDFAction)
 
-        
 
 
 
@@ -195,8 +193,8 @@ class UnderMap:
             return
         else:
             dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
-            if dirSelected == '' :
-                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun dossier séléctionné")
+            if dirSelected == '':
+                self.iface.messageBar().pushWarning(u'Undermap', "Aucun dossier séléctionné")
                 return
             else:
                 initialise_PDF(dirSelected)
@@ -204,12 +202,12 @@ class UnderMap:
     def initialiseFDP(self):
         project_path = get_project_path()
         if project_path == './':
-            QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
+            QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
             return
         else:
-            fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.dxf")
+            fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.dxf")
             if fileSelected == ('', ''):
-                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun fichier dxf séléctionné")
+                self.iface.messageBar().pushWarning(u'Undermap', "Aucun fichier dxf séléctionné")
                 return
             else:
                 initialise_FDP(fileSelected)
@@ -217,23 +215,12 @@ class UnderMap:
     def initialiseEmprise(self):
         project_path = get_project_path()
         if project_path == './':
-            QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
+            QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
             return
         else:
-            fileSelected = QFileDialog.getOpenFileName(None,"Sélectionnez un fichier", project_path, "*.kml")
+            fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.kml")
             if fileSelected == ('', ''):
-                self.iface.messageBar().pushWarning(u'Undermap', "Acuncun fichier kml séléctionné")
+                self.iface.messageBar().pushWarning(u'Undermap', "Aucun fichier kml séléctionné")
                 return
             else:
                 initialise_Emprise(fileSelected)
-
-
-
-
-
-
-
-
-
-
-

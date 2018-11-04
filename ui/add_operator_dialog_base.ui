@@ -6,84 +6,60 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>178</height>
+    <width>443</width>
+    <height>142</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string notr="true">Ajout opérateur</string>
   </property>
-  <widget class="QDialogButtonBox" name="button_add_operator">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>120</y>
-     <width>341</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_name_opertor">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>30</y>
-     <width>101</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Nom de l'opérateur: </string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_select_pdf">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>70</y>
-     <width>101</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Selectionnez le PDF:</string>
-   </property>
-  </widget>
-  <widget class="QgsFileWidget" name="select_pdf_action">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>150</x>
-     <y>60</y>
-     <width>320</width>
-     <height>45</height>
-    </rect>
-   </property>
-   <property name="autoFillBackground">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QgsFilterLineEdit" name="operator_name">
-   <property name="geometry">
-    <rect>
-     <x>150</x>
-     <y>30</y>
-     <width>320</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="qgisRelation" stdset="0">
-    <string notr="true"/>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_name_opertor">
+       <property name="text">
+        <string>Nom de l'opérateur </string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QgsFilterLineEdit" name="operator_name">
+       <property name="qgisRelation" stdset="0">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_select_pdf">
+       <property name="text">
+        <string>Selectionnez le PDF</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QgsFileWidget" name="select_pdf_action">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="button_add_operator">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <customwidgets>
   <customwidget>
@@ -102,38 +78,5 @@
   <tabstop>button_add_operator</tabstop>
  </tabstops>
  <resources/>
- <connections>
-  <connection>
-   <sender>button_add_operator</sender>
-   <signal>accepted()</signal>
-   <receiver>DialogAjoutOperateur</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>228</x>
-     <y>231</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>267</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_add_operator</sender>
-   <signal>rejected()</signal>
-   <receiver>DialogAjoutOperateur</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>296</x>
-     <y>231</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>267</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

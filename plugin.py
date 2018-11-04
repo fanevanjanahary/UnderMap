@@ -38,8 +38,6 @@ from .utilities.utilities import get_project_path
 from UnderMap.process import (initialise_PDF, initialise_FDP, initialise_Emprise)
 
 
-
-
 LOGGER = logging.getLogger('UnderMap')
 
 
@@ -76,8 +74,6 @@ class UnderMap:
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
 
-
-
         # Initialise buttton
         self.init_button = QToolButton()
         self.init_button.setMenu(QMenu())
@@ -97,8 +93,8 @@ class UnderMap:
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
 
-
-    def tr(self, message):
+    @staticmethod
+    def tr(message):
         """Get the translation for a string using Qt translation API.
 
         We implement this ourselves since we do not inherit QObject.
@@ -112,8 +108,7 @@ class UnderMap:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('UnderMap', message)
 
-
-
+    # noinspection PyPep8Naming
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         # the actions
@@ -143,10 +138,10 @@ class UnderMap:
             self.iface.mainWindow())
 
         # actions dialogs
-        self.initialisePDFAction.triggered.connect(self.initialisePDF)
-        self.ajouterOperateurAction.triggered.connect(self.addOperateur)
-        self.initialiseFDPAction.triggered.connect(self.initialiseFDP)
-        self.initialiseEmpriseAction.triggered.connect(self.initialiseEmprise)
+        self.initialisePDFAction.triggered.connect(self.initialise_PDF)
+        self.ajouterOperateurAction.triggered.connect(self.add_operator)
+        self.initialiseFDPAction.triggered.connect(self.initialise_FDP)
+        self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
@@ -157,14 +152,10 @@ class UnderMap:
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
 
-
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
         self.toolbar.addAction(self.operateursAction)
         self.toolbar.addAction(self.initialisePDFAction)
-
-
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -182,24 +173,23 @@ class UnderMap:
             # substitute with your code.
             pass
 
-    def addOperateur(self):
-        self.addop.show()
-        result = self.addop.exec_()
+    def add_operator(self):
+        self.addop.exec_()
 
-    def initialisePDF(self):
+    def initialise_PDF(self):
         project_path = get_project_path()
         if project_path == './':
             QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis")
             return
         else:
-            dirSelected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
-            if dirSelected == '':
-                self.iface.messageBar().pushWarning(u'Undermap', "Aucun dossier séléctionné")
+            dir_selected = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier", project_path,  QFileDialog.ShowDirsOnly)
+            if dir_selected == '':
+                self.iface.messageBar().pushWarning('Undermap', "Aucun dossier séléctionné")
                 return
             else:
-                initialise_PDF(dirSelected)
+                initialise_PDF(dir_selected)
 
-    def initialiseFDP(self):
+    def initialise_FDP(self):
         project_path = get_project_path()
         if project_path == './':
             QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
@@ -207,12 +197,12 @@ class UnderMap:
         else:
             fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.dxf")
             if fileSelected == ('', ''):
-                self.iface.messageBar().pushWarning(u'Undermap', "Aucun fichier dxf séléctionné")
+                self.iface.messageBar().pushWarning('Undermap', "Aucun fichier dxf séléctionné")
                 return
             else:
                 initialise_FDP(fileSelected)
 
-    def initialiseEmprise(self):
+    def initialise_emprise(self):
         project_path = get_project_path()
         if project_path == './':
             QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
@@ -220,7 +210,7 @@ class UnderMap:
         else:
             fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.kml")
             if fileSelected == ('', ''):
-                self.iface.messageBar().pushWarning(u'Undermap', "Aucun fichier kml séléctionné")
+                self.iface.messageBar().pushWarning('Undermap', "Aucun fichier kml séléctionné")
                 return
             else:
                 initialise_Emprise(fileSelected)

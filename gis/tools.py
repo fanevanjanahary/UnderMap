@@ -46,7 +46,7 @@ def add_layer_in_group (layer, group, style_path):
         group.addLayer(layer)
     if style_path is not None:
         layer.loadNamedStyle(join(style_path, 'line_style.qml'))
-        layer.featureAdded.connect(new_rsx_feature)
+       
 
 
 # convert file to shp
@@ -108,10 +108,4 @@ def create_layer(to_dir, layer_name):
     layer_ret = QgsVectorLayer(layer_path+".shp", layer_name, "ogr")
     return layer_ret
 
-def new_rsx_feature(id_feature):
-    """slot lors d'ajout d'une nouvelle entité
-
-    :return:
-    """
-    return
 

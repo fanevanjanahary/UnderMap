@@ -78,7 +78,7 @@ def initialise_FDP(dxf_file):
     dxf_info = "|layername=entities|geometrytype=LineString"
     layer_name = basename(dxf_file[0]).split('.')[0]
     dxf_vl = QgsVectorLayer(dxf_file[0]+dxf_info, layer_name, "ogr")
-    if save_as_shp(dxf_vl, shp_path, dxf_vl.crs()):
+    if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         add_layer_in_group(layer, get_groupe().findGroup("Fond-Plan"),None)
 

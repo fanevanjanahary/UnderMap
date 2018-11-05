@@ -2,6 +2,7 @@
 import os, shutil, typing
 from os.path import isfile, dirname, join, isdir, basename
 from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, QgsMessageLog
+from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
 PROJECT_GROUP = ['Reseau', 'Fond-Plan', 'Impression']
@@ -39,20 +40,21 @@ def copy_file(from_dir, to_dir, file_type):
         for item_path in from_dir:
             if isfile(item_path.replace('"', '')):
                 shutil.copy(item_path.replace('"', ''), to_dir)
-                split_pdf(item_path, pdf_treat)
+                if item_path.endswith(".pdf"):
+                    split_pdf(item_path, pdf_treat)
     elif isdir(from_dir):
         for root, dirs, files in os.walk(from_dir):
             for file in files:
                 if file.endswith(file_type):
                     pdf_from_brute = root + os.sep + file
                     shutil.copy(pdf_from_brute, to_dir)
-                    split_pdf(pdf_from_brute, pdf_treat)
+                    if pdf_from_brute.endswith(".pdf"):
+                        split_pdf(pdf_from_brute, pdf_treat)
     else:
         if isfile(from_dir):
             shutil.copy(from_dir, to_dir)
-            split_pdf(from_dir, pdf_treat)
-
-
+            if from_dir.endswith(".pdf"):
+                split_pdf(from_dir, pdf_treat)
 
 
 def rename_file(file, name):
@@ -82,7 +84,6 @@ def create_dir(dir_path,dir_name):
     new_dir = join(dir_path, dir_name)
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
-
 
 
 def get_operator(path_brute):
@@ -138,17 +139,19 @@ def split_pdf(pdf_file, to_dir):
     to_dir = join(to_dir, file_name)
     if pdf_file.endswith(".pdf"):
         QgsMessageLog.logMessage('Découpage du PDF {}'.format(pdf_file), 'UnderMap', Qgis.Info)
-
         pdf_in_file = open(pdf_file, 'rb')
-
         inputpdf = PdfFileReader(pdf_in_file, strict=False)
         pages_no = inputpdf.numPages
-
-        for i in range(pages_no):
-            inputpdf = PdfFileReader(pdf_in_file, strict=False)
-            output = PdfFileWriter()
-            output.addPage(inputpdf.getPage(i))
-            with open(to_dir + '_{:02}.pdf'.format(i+1), "wb") as outputStream:
-                output.write(outputStream)
-
-        pdf_in_file.close()
+        if pages_no > 1:
+            try:
+                for i in range(pages_no):
+                    inputpdf = PdfFileReader(pdf_in_file, strict=False)
+                    output = PdfFileWriter()
+                    output.addPage(inputpdf.getPage(i))
+                    with open(to_dir + '_{:02}.pdf'.format(i+1), "wb") as outputStream:
+                        output.write(outputStream)
+                pdf_in_file.close()
+            except(AttributeError):
+                QgsMessageBar.messageBar().pushError('Undermap', "Y a une erreur lors de découpage du fichier:{}".format(pdf_file))
+        else:
+            shutil.copy(pdf_file, to_dir+'.pdf')

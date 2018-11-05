@@ -23,7 +23,7 @@
 """
 
 import logging
-from os.path import dirname, join, exists, isfile
+from os.path import dirname, join, exists
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QIcon

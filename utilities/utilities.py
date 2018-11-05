@@ -148,7 +148,7 @@ def split_pdf(pdf_file, to_dir):
             inputpdf = PdfFileReader(pdf_in_file, strict=False)
             output = PdfFileWriter()
             output.addPage(inputpdf.getPage(i))
-            with open(to_dir + ' {:02}.pdf'.format(i+1), "wb") as outputStream:
+            with open(to_dir + '_{:02}.pdf'.format(i+1), "wb") as outputStream:
                 output.write(outputStream)
 
         pdf_in_file.close()

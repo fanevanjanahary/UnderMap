@@ -9,8 +9,8 @@ from UnderMap.utilities.utilities import (
     RSX_SUB_GROUP,
     QML_PATH,
     get_project_path,
-    groupes_to_array,
-    get_groupe,
+    groups_to_array,
+    get_group,
     get_operator
     )
 from UnderMap.definition.fields import(
@@ -31,7 +31,7 @@ def create_field(definition):
     return field
 
 
-def add_layer_in_group (layer, group, style_path):
+def add_layer_in_group(layer, group, style_path):
     """ Ajouter une couche dans un groupe dans qgis
 
     :param layer: Couche à ajouter
@@ -48,8 +48,6 @@ def add_layer_in_group (layer, group, style_path):
         layer.loadNamedStyle(join(style_path, 'line_style.qml'))
        
 
-
-# convert file to shp
 def save_as_shp(file_to_convert, shp_path, crs):
     if file_to_convert.isValid():
         QgsVectorFileWriter.writeAsVectorFormat(file_to_convert, shp_path, "utf-8", crs, "ESRI Shapefile")
@@ -58,27 +56,20 @@ def save_as_shp(file_to_convert, shp_path, crs):
         return False
 
 
-
-def create_group(from_operators_brute):
+def create_group():
     """ Creation des groupes dans le projet QGIS
 
-    :param from_operators_brute: Les dossiers de l'operateurs depuis la donnée brute
-    :type from_operators_brute: str
     """
+    qgis_groups = get_group()
+
     for g_item in PROJECT_GROUP:
-        if g_item not in groupes_to_array(get_groupe()):
-            get_groupe().addGroup(g_item)
-    # add sub group on Reseau
-    for item in get_groupe().children():
-        if item.name() == 'Reseau':
-            for s_item in RSX_SUB_GROUP:
-                if s_item not in groupes_to_array(item):
-                    item.addGroup(s_item)
-        for sr_item in item.children():
-            if sr_item.name() == 'TIF':
-                for operator_folder_name in get_operator(from_operators_brute):
-                    if operator_folder_name not in groupes_to_array(sr_item):
-                        sr_item.addGroup(operator_folder_name)
+        if g_item not in groups_to_array(qgis_groups):
+            qgis_groups.addGroup(g_item)
+    rsx_group = qgis_groups.findGroup("Reseau")
+    if rsx_group is not None:
+        for item in RSX_SUB_GROUP:
+            if qgis_groups.findGroup(item) is None:
+                rsx_group.addGroup(item)
 
 
 def create_layer(to_dir, layer_name):

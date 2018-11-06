@@ -72,7 +72,7 @@ def rename_file(file, name):
         os.rename(os.path.join(file, item), os.path.join(file, new_filename))
 
 
-def create_dir(dir_path,dir_name):
+def create_dir(dir_path, dir_name):
     """ Creation d'un dossier
 
     :param dir_path: Le chemin où le dossier sera créer
@@ -102,7 +102,7 @@ def get_operator(path_brute):
     return lesoperator_folder_name
 
 
-def get_groupe():
+def get_group():
     """  Retourne un groupe d'un projet QGIS
 
     :return: Un groupe d'un projet QGIS
@@ -112,7 +112,7 @@ def get_groupe():
     return root
 
 
-def groupes_to_array(children):
+def groups_to_array(children):
     """ Convertition de ListGroupe en liste array
 
     :param children: Groupe de QGIS
@@ -138,20 +138,24 @@ def split_pdf(pdf_file, to_dir):
     file_name = basename(pdf_file).split('.')[0]
     to_dir = join(to_dir, file_name)
     if pdf_file.endswith(".pdf"):
-        QgsMessageLog.logMessage('Découpage du PDF {}'.format(pdf_file), 'UnderMap', Qgis.Info)
+        QgsMessageLog.logMessage("Découpage du PDF {}".format(pdf_file), 'UnderMap', Qgis.Info)
         pdf_in_file = open(pdf_file, 'rb')
-        inputpdf = PdfFileReader(pdf_in_file, strict=False)
-        pages_no = inputpdf.numPages
+        input_pdf = PdfFileReader(pdf_in_file, strict=False)
+        pages_no = input_pdf.numPages
+        del input_pdf
         if pages_no > 1:
-            try:
-                for i in range(pages_no):
-                    inputpdf = PdfFileReader(pdf_in_file, strict=False)
-                    output = PdfFileWriter()
-                    output.addPage(inputpdf.getPage(i))
-                    with open(to_dir + '_{:02}.pdf'.format(i+1), "wb") as outputStream:
+            for i in range(pages_no):
+                input_pdf = PdfFileReader(pdf_in_file, strict=False)
+                output = PdfFileWriter()
+                output.addPage(input_pdf.getPage(i))
+                with open(to_dir + '_{:02}.pdf'.format(i+1), "wb") as outputStream:
+                    try:
                         output.write(outputStream)
-                pdf_in_file.close()
-            except(AttributeError):
-                QgsMessageBar.messageBar().pushError('Undermap', "Y a une erreur lors de découpage du fichier:{}".format(pdf_file))
+                    except AttributeError:
+                        QgsMessageBar.messageBar().pushError('Undermap',
+                                                             "Y a une erreur lors de découpage"
+                                                             "du fichier:{}".format(pdf_file))
+                del input_pdf
         else:
             shutil.copy(pdf_file, to_dir+'.pdf')
+        pdf_in_file.close()

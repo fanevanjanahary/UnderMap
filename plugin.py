@@ -36,7 +36,7 @@ from qgis.core import QgsSettings
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
 from .utilities.utilities import get_project_path
-from UnderMap.process import (initialise_PDF, initialise_FDP, initialise_Emprise)
+from UnderMap.process import (initialise_pdf, initialise_fdp, initialise_emprise)
 
 
 LOGGER = logging.getLogger('UnderMap')
@@ -190,7 +190,7 @@ class UnderMap:
                 self.iface.messageBar().pushWarning('Undermap', "Aucun dossier séléctionné")
                 return
             else:
-                initialise_PDF(dir_selected)
+                initialise_pdf(dir_selected)
 
     def initialise_FDP(self):
         project_path = get_project_path()
@@ -203,7 +203,7 @@ class UnderMap:
                 self.iface.messageBar().pushWarning('Undermap', "Aucun fichier dxf séléctionné")
                 return
             else:
-                initialise_FDP(fileSelected)
+                initialise_fdp(fileSelected)
 
     def initialise_emprise(self):
         project_path = get_project_path()
@@ -216,4 +216,4 @@ class UnderMap:
                 self.iface.messageBar().pushWarning('Undermap', "Aucun fichier kml séléctionné")
                 return
             else:
-                initialise_Emprise(fileSelected)
+                initialise_emprise(fileSelected)

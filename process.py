@@ -19,7 +19,8 @@ from UnderMap.gis.tools import (
     save_as_shp,
     add_layer_in_group,
     create_group,
-    create_layer
+    create_layer,
+    categorized_layer
     )
 
 
@@ -86,6 +87,7 @@ def initialise_fdp(dxf_file):
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         add_layer_in_group(layer, get_group().findGroup("Fond-Plan"),None)
+        categorized_layer(layer, 'Layer')
 
 
 def initialise_emprise(kml_file):

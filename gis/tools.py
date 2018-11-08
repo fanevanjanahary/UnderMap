@@ -3,7 +3,14 @@
 """Otuils pour les couches vector"""
 
 from os.path import join
-from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, QgsField, QgsFields, QgsWkbTypes, QgsMemoryProviderUtils
+from qgis.core import (
+    QgsProject, QgsVectorLayer,
+    QgsVectorFileWriter, QgsField, QgsFields,
+    QgsWkbTypes, QgsMemoryProviderUtils,
+    QgsSymbol, QgsRendererCategory,
+    QgsCategorizedSymbolRenderer
+    )
+
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     RSX_SUB_GROUP,
@@ -100,3 +107,21 @@ def create_layer(to_dir, layer_name):
     return layer_ret
 
 
+def categorized_layer(layer, attribute_name):
+    """ Categorisation d'une couche
+
+    :param layer: La couche à catégoriser
+    :type layer: QgsVectorLayer
+
+    :param attribute_name: Nom de colonne à classifier
+    :type attribute_name: str
+    """
+    field = layer.dataProvider().fieldNameIndex(attribute_name)
+    values = sorted(layer.uniqueValues(field))
+    categories = []
+    for item in values:
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        category = QgsRendererCategory(item, symbol, str(item))
+        categories.append(category)
+    renderer = QgsCategorizedSymbolRenderer(attribute_name, categories)
+    layer.setRenderer(renderer)

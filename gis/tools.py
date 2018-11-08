@@ -121,7 +121,7 @@ def categorized_layer(layer, attribute_name):
     categories = []
     for item in values:
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        category = QgsRendererCategory(item, symbol, str(item))
+        category = QgsRendererCategory(item, symbol, item)
         categories.append(category)
     renderer = QgsCategorizedSymbolRenderer(attribute_name, categories)
     layer.setRenderer(renderer)

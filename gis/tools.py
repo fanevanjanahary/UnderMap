@@ -8,7 +8,8 @@ from qgis.core import (
     QgsVectorFileWriter, QgsField, QgsFields,
     QgsWkbTypes, QgsMemoryProviderUtils,
     QgsSymbol, QgsRendererCategory,
-    QgsCategorizedSymbolRenderer
+    QgsCategorizedSymbolRenderer,
+    QgsFeatureRequest
     )
 
 from UnderMap.utilities.utilities import (
@@ -46,7 +47,7 @@ def add_layer_in_group(layer, group, style_path):
 
     :param group:
     :param style_path:
-    :return:
+
     """
     QgsProject.instance().addMapLayer(layer, False)
     if layer.isValid():
@@ -125,3 +126,29 @@ def categorized_layer(layer, attribute_name):
         categories.append(category)
     renderer = QgsCategorizedSymbolRenderer(attribute_name, categories)
     layer.setRenderer(renderer)
+
+
+def length_feature(layer, rsx, cls, abd):
+    """ Calcul d'un linéaire réseau donné d'une couche
+
+    :param layer: Couche
+    :param rsx: Type d'un réseau
+    :param cls: Classe d'un réseau
+    :param abd: Abandoné ou pas
+
+    :type layer: QgsVectorLayer
+    :type rsx: str
+    :type cls: str
+    :type abd: Integer
+
+    :return: longueur d'un réseau
+    :rtype: Double
+    """
+    expr = '"Reseau" = \'{}\' AND "Classe" = \'{}\' AND "Abandon" = {}'.format(rsx, cls, abd)
+    request = QgsFeatureRequest().setFilterExpression(expr)
+    sum = 0
+    features = layer.getFeatures(request)
+    for f in features:
+        geom = f.geometry()
+        sum += geom.length()
+    return sum

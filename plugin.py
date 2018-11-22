@@ -85,12 +85,9 @@ class UnderMap:
         self.toolbar.setObjectName('UnderMap')
 
         # actions
-        self.actions = None
         self.initialisePDFAction = None
-        self.operateursAction = None
-        self.modificationAction = None
-        self.rapportAction = None
-        self.ajouterOperateurAction = None
+        self.reportAction = None
+        self.addOperatorAction = None
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
 
@@ -120,14 +117,14 @@ class UnderMap:
             'Initialiser PDF',
             self.iface.mainWindow())
 
-        self.ajouterOperateurAction = QAction(
+        self.addOperatorAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'ajouterOperateur.png')),
             'Ajouter un opérateur',
             self.iface.mainWindow())
 
-        self.operateursAction = QAction(
+        self.reportAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
-            'Opérateurs',
+            'Générer le rapport',
             self.iface.mainWindow())
 
         self.initialiseFDPAction = QAction(
@@ -142,13 +139,13 @@ class UnderMap:
 
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
-        self.ajouterOperateurAction.triggered.connect(self.add_operator)
+        self.addOperatorAction.triggered.connect(self.add_operator)
         self.initialiseFDPAction.triggered.connect(self.initialise_FDP)
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
-        self.init_button.menu().addAction(self.ajouterOperateurAction)
+        self.init_button.menu().addAction(self.addOperatorAction)
         self.init_button.setDefaultAction(self.initialisePDFAction)
         # add separator
         # self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
@@ -157,8 +154,8 @@ class UnderMap:
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
-        self.toolbar.addAction(self.operateursAction)
-        self.toolbar.addAction(self.initialisePDFAction)
+        self.toolbar.addAction(self.reportAction)
+
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""

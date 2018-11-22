@@ -3,7 +3,7 @@
 """Définition des attributs"""
 
 
-from PyQt5.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant
 
 
 operator_def = {

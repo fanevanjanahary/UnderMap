@@ -18,8 +18,7 @@ from UnderMap.utilities.utilities import (
     QML_PATH,
     get_project_path,
     groups_to_array,
-    get_group,
-    get_operator
+    get_group
     )
 from UnderMap.definition.fields import(
     operator_def,

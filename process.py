@@ -13,7 +13,7 @@ from UnderMap.utilities.utilities import (
     get_project_path,
     groups_to_array,
     get_group,
-    get_operator
+    get_operators
     )
 from UnderMap.gis.tools import (
     save_as_shp,
@@ -31,7 +31,7 @@ def initialise_pdf(from_operators):
     :return:
     """
     create_group()
-    for item in get_operator(from_operators):
+    for item in get_operators(from_operators):
         operator_dir = join(from_operators, item)
         create_operator(item, operator_dir)
 

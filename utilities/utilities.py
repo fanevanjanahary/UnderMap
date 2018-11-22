@@ -86,7 +86,7 @@ def create_dir(dir_path, dir_name):
         os.makedirs(new_dir)
 
 
-def get_operator(path_brute):
+def get_operators(path_brute):
     """ Mettre dans une liste le nom de tous les dossier depuis donné bruite
 
     :param path_brute: Chemin de la donnée brute
@@ -95,11 +95,11 @@ def get_operator(path_brute):
     :return: Liste de dossier
     :rtype: list
     """
-    lesoperator_folder_name = []
+    operators_folder_name = []
     for item in os.listdir(path_brute):
         if isdir(join(path_brute, item)):
-            lesoperator_folder_name.append(item)
-    return lesoperator_folder_name
+            operators_folder_name.append(item)
+    return operators_folder_name
 
 
 def get_group():

@@ -36,7 +36,12 @@ from qgis.core import QgsSettings
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
 from .utilities.utilities import get_project_path
-from UnderMap.process import (initialise_pdf, initialise_fdp, initialise_emprise)
+from UnderMap.process import (
+    initialise_pdf,
+    initialise_fdp,
+    initialise_emprise,
+    export_xlsx_report
+    )
 
 
 LOGGER = logging.getLogger('UnderMap')
@@ -142,6 +147,7 @@ class UnderMap:
         self.addOperatorAction.triggered.connect(self.add_operator)
         self.initialiseFDPAction.triggered.connect(self.initialise_FDP)
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
+        self.reportAction.triggered.connect(self.export_report)
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
@@ -214,3 +220,12 @@ class UnderMap:
                 return
             else:
                 initialise_emprise(fileSelected)
+
+
+    def export_report(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
+            return
+        else:
+            export_xlsx_report(project_path)

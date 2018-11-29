@@ -4,6 +4,8 @@
 import os
 from os.path import join, basename, exists
 from qgis.core import QgsProject, QgsVectorLayer
+from qgis.gui import QgsMessageBar
+from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
     OPERATOR_SUB_DIR,
@@ -108,3 +110,15 @@ def initialise_emprise(kml_file):
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         add_layer_in_group(layer, qgis_groups.findGroup("Fond-Plan"), None)
+
+
+def export_xlsx_report(path):
+    try:
+        export_report_file(path)
+    except PermissionError:
+        QgsMessageBar.pushWarning('Undermap', "QGIS ne peut pas écrire "
+                                                         "le rapport car le fichier"
+                                                             ":{} est ouvert "
+                                                         "dans une autre application"
+                                                        .format(join(path, QgsProject.instance()
+                                                        .baseName()+'.xlsx')))

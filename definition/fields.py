@@ -39,3 +39,15 @@ abandoned_def = {
     'length': 1,
     'precision': 0,
 }
+
+rsx_color = {
+    'ELEC': 'red',
+    'GAZ': '#ffcf00',
+    'PC': 'orange',
+    'AEP': 'blue',
+    'ASS': '#81300c',
+    'CC': 'purple',
+    'SIG': 'white',
+    'MR': 'pink',
+    'TEL': 'green'
+}

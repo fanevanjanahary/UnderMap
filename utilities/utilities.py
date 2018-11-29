@@ -10,6 +10,7 @@ RSX_SUB_GROUP = ['RSX', 'TIF', 'BUF']
 OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
+LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')
 PDF_SUB_DIR = ['A-TRAITER', 'IGNORE', 'UTILE']
 
 

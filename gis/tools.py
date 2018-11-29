@@ -30,6 +30,11 @@ from UnderMap.definition.fields import(
 
 
 def create_field(definition):
+    """ Création d'un champ dans un table attributaire
+
+    :param definition: Définition de nom, type, taille et précision d'un champ
+    :type definition: definition
+    """
     field = QgsField()
     field.setName(definition['name'])
     field.setType(definition['type'])

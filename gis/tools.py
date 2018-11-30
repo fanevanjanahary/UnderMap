@@ -151,8 +151,15 @@ def length_feature(layer, rsx, cls, abd):
     expr = '"Reseau" = \'{}\' AND "Classe" = \'{}\' AND "Abandon" = {}'.format(rsx, cls, abd)
     request = QgsFeatureRequest().setFilterExpression(expr)
     sum = 0
-    features = layer.getFeatures(request)
-    for f in features:
-        geom = f.geometry()
-        sum += geom.length()
-    return sum
+    if layer is None:
+        return sum
+    try:
+        features = layer.getFeatures(request)
+        for f in features:
+            geom = f.geometry()
+            sum += geom.length()
+        return sum
+    except AttributeError:
+        return sum
+
+

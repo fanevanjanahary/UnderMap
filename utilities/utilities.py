@@ -160,3 +160,24 @@ def split_pdf(pdf_file, to_dir):
         else:
             shutil.copy(pdf_file, to_dir+'.pdf')
         pdf_in_file.close()
+
+
+def count_pdf_file(dir_name):
+    """ Compter les fichiers dans le dossier PDF d'un opérateur d'un RSX
+
+    :param dir_name: Le nom de dossier
+    :type dir_name: str
+
+    :return: Une liste de nombre
+    :rtype: list
+    """
+    path = get_project_path()
+    operator_path = join(path, 'RSX', dir_name)
+    nbr_file = []
+    pdf_path_opr = join(operator_path, 'PDF')
+    for item_dir_pdf in get_operators(pdf_path_opr):
+        sub_pdf = join(pdf_path_opr, item_dir_pdf)
+        nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file))])
+        nbr_file.append(nbr)
+
+    return nbr_file

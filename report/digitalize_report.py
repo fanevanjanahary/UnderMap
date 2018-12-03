@@ -98,25 +98,23 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
         sum_by_class = 0
         worksheet.write(row + i, cell_cord - 1, item_value, cell_format.set_fg_color(rsx_color[item_value]))
         for j, item_class in enumerate(['A', 'B', 'C']):
+
             if layer is None:
-                print('=SUMIF(Recapitulatif-Operateurs!E9:E9999, $A%d, Recapitulatif-Operateurs!{}9:{}9999)'
-                                        .format(chr(cell_letter_to_nbr + i),
-                                        chr(cell_letter_to_nbr +i )) % (row + i+ 1))
                 worksheet.write_formula(row + i, cell_cord + j,
-                                 '=SUMIF(Recapitulatif-Operateurs!E9:E9999, $A%d, Recapitulatif-Operateurs!{}9:{}9999)'
-                                        .format(chr(cell_letter_to_nbr + i),
-                                        chr(cell_letter_to_nbr +i )) % (row + i+ 1),
+                                 '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
+                                        .format(chr(ord('E') + j),
+                                        chr(ord('E') + j)) % (row + i+ 1),
                                  cell_format.set_fg_color(rsx_color[item_value]))
                 worksheet.write_formula(row + i, cell_cord + 4 +j,
-                                 '=SUMIF(Recapitulatif-Operateurs!E9:E9999, $A%d, Recapitulatif-Operateurs!{}9:{}9999)'
-                                        .format(chr(cell_letter_to_nbr + i),
-                                        chr(cell_letter_to_nbr +i )) % (row + i+ 1),
+                                 '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
+                                        .format(chr(ord('I') + j),
+                                        chr(ord('I') + j)) % (row + i+ 1),
                                  cell_format.set_fg_color(rsx_color[item_value]))
             else:
-                 worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
-                                 cell_format.set_fg_color(rsx_color[item_value]))
-                 worksheet.write(row + i, cell_cord + 4 +j, length_feature(layer, item_value, item_class,1),
-                                 cell_format.set_fg_color(rsx_color[item_value]))
+                worksheet.write(last_row, cell_cord + j, length_feature(layer, item_value, item_class,0),
+                                cell_format.set_fg_color(rsx_color[item_value]))
+                worksheet.write(last_row, cell_cord + 4 +j, length_feature(layer, item_value, item_class,1),
+                                cell_format.set_fg_color(rsx_color[item_value]))
 
         while sum_by_class<3 and col_liner < 9:
             cell_length_class = cell_letter_to_nbr + col_liner
@@ -159,9 +157,9 @@ def export_report_file(path):
         'valign': 'vcenter'
         })
 
-    worksheets = ['Recapitulatif-Operateurs', 'Recapitulatif-Réseaux']
+    worksheets = ['Recapitulatif_Operateurs', 'Recapitulatif_Réseaux']
 
-    for i_worksheet, item_worksheet in enumerate(worksheets):
+    for i_worksheet, item_worksheet in  (worksheets):
         worksheet = workbook.add_worksheet(item_worksheet)
         for i, item in enumerate(operators_content):
             layer_path = join(operators_path, item, 'SHP', item)
@@ -170,8 +168,9 @@ def export_report_file(path):
             values = sorted(layer.uniqueValues(field))
 
             if i_worksheet == 0:
-                last_row = create_content(worksheet, 'Recapitulatif par opérateur', cell_header, cell_format, 8+i, 'E', values, layer)
-                worksheet.write(8+i, 0, item)
+                last_row = create_content(worksheet, 'Recapitulatif par opérateur',
+                                          cell_header, cell_format, 8 + i, 'E', values, layer)
+                worksheet.write(last_row, 0, item)
                 worksheet.write(last_row, 2, count_pdf_file(item)[0])
 
             if i_worksheet == 1:
@@ -182,6 +181,7 @@ def export_report_file(path):
                 worksheet_rsx.write_formula(8, 3,
                             '=${}%d+${}%d'.format('B', 'C')%(8 + 1, 8 + 1)
                 )
+
         if i_worksheet ==  1:
             create_content(worksheet, 'Recapitulatif par réseau', cell_header, cell_format, 8, 'B', rsx_color, None)
 

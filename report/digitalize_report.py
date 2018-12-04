@@ -11,6 +11,11 @@ from UnderMap.utilities.utilities import (
     count_pdf_file
 )
 
+def cell_color(rsx, cell_format):
+    for item in rsx_color:
+        if rsx == item:
+            cell_format.set_fg_color(rsx_color[item])
+            return cell_format
 
 def create_head_content(worksheet, title, header_format, cell):
     logo = LOGO_PATH
@@ -96,7 +101,7 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
         last_row  += i
         col_liner = 0
         sum_by_class = 0
-        worksheet.write(row + i, cell_cord - 1, item_value, cell_format.set_fg_color(rsx_color[item_value]))
+        worksheet.write(row + i, cell_cord - 1, item_value, cell_color(item_value, cell_format))
         for j, item_class in enumerate(['A', 'B', 'C']):
 
             if layer is None:
@@ -104,17 +109,17 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
                                  '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
                                         .format(chr(ord('E') + j),
                                         chr(ord('E') + j)) % (row + i+ 1),
-                                 cell_format.set_fg_color(rsx_color[item_value]))
+                                 cell_color(item_value, cell_format))
                 worksheet.write_formula(row + i, cell_cord + 4 +j,
                                  '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
                                         .format(chr(ord('I') + j),
                                         chr(ord('I') + j)) % (row + i+ 1),
-                                 cell_format.set_fg_color(rsx_color[item_value]))
+                                 cell_color(item_value, cell_format))
             else:
-                worksheet.write(last_row, cell_cord + j, length_feature(layer, item_value, item_class,0),
-                                cell_format.set_fg_color(rsx_color[item_value]))
-                worksheet.write(last_row, cell_cord + 4 +j, length_feature(layer, item_value, item_class,1),
-                                cell_format.set_fg_color(rsx_color[item_value]))
+                worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
+                                cell_color(item_value, cell_format))
+                worksheet.write(row + i, cell_cord + 4 +j, length_feature(layer, item_value, item_class,1),
+                                cell_color(item_value, cell_format))
 
         while sum_by_class<3 and col_liner < 9:
             cell_length_class = cell_letter_to_nbr + col_liner
@@ -124,14 +129,35 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
             worksheet.write_formula(row + i, cell_sum_by_func,
                             '=SUM(${}%d:${}%d)'.format(chr(cell_length_class), chr(cell_length_class + 2)) %
                             (row + i + 1, row + i + 1),
-                            cell_format.set_fg_color(rsx_color[item_value]))
+                            cell_color(item_value, cell_format))
             worksheet.write_formula(row + i, cell_sum_by_class,
                             '=${}%d+${}%d'.format(chr(cell_by_class), chr(cell_by_class + 4)) %
                             (row + i + 1, row + i + 1),
-                            cell_format.set_fg_color(rsx_color[item_value]))
+                            cell_color(item_value, cell_format))
             col_liner += 4
             sum_by_class += 1
     return last_row
+
+
+def get_position_operators(operators_path, operators_content):
+
+    positions = [0]
+    value = 0
+    for i, item in enumerate(operators_content):
+        layer_path = join(operators_path, item, 'SHP', item)
+        layer = QgsVectorLayer(layer_path+".shp")
+        field = layer.dataProvider().fieldNameIndex('Reseau')
+        values = sorted(layer.uniqueValues(field))
+        if len(values) > 0 :
+            value += len(values)-1
+            positions.append(value)
+        else:
+            value += len(values)
+            positions.append(value)
+
+
+    return positions
+
 
 
 def export_report_file(path):
@@ -159,7 +185,10 @@ def export_report_file(path):
 
     worksheets = ['Recapitulatif_Operateurs', 'Recapitulatif_Réseaux']
 
-    for i_worksheet, item_worksheet in  (worksheets):
+    position = get_position_operators(operators_path, operators_content)
+
+    for i_worksheet, item_worksheet in  enumerate(worksheets):
+
         worksheet = workbook.add_worksheet(item_worksheet)
         for i, item in enumerate(operators_content):
             layer_path = join(operators_path, item, 'SHP', item)
@@ -168,10 +197,10 @@ def export_report_file(path):
             values = sorted(layer.uniqueValues(field))
 
             if i_worksheet == 0:
-                last_row = create_content(worksheet, 'Recapitulatif par opérateur',
-                                          cell_header, cell_format, 8 + i, 'E', values, layer)
-                worksheet.write(last_row, 0, item)
-                worksheet.write(last_row, 2, count_pdf_file(item)[0])
+                create_content(worksheet, 'Recapitulatif par opérateur',
+                                          cell_header, cell_format, 8 + i + position[i], 'E', values, layer)
+                worksheet.write(8 + i + position[i], 0, item)
+                worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0])
 
             if i_worksheet == 1:
                 worksheet_rsx = workbook.add_worksheet(item)

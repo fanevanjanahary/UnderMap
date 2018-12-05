@@ -12,6 +12,7 @@ from UnderMap.utilities.utilities import (
 )
 
 def cell_color(rsx, cell_format):
+
     for item in rsx_color:
         if rsx == item:
             cell_format.set_fg_color(rsx_color[item])
@@ -114,7 +115,7 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
                                  '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
                                         .format(chr(ord('I') + j),
                                         chr(ord('I') + j)) % (row + i+ 1),
-                                 cell_color(item_value, cell_format))
+                                 cell_color(item_value, cell_color(item_value, cell_format)))
             else:
                 worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
                                 cell_color(item_value, cell_format))
@@ -154,8 +155,6 @@ def get_position_operators(operators_path, operators_content):
         else:
             value += len(values)
             positions.append(value)
-
-
     return positions
 
 
@@ -175,12 +174,14 @@ def export_report_file(path):
         'align': 'center',
         'valign': 'vcenter',
         'fg_color': '#bebebe'})
+    cell_header.set_text_wrap()
 
     cell_format = workbook.add_format({
         'bold': 1,
         'border': 1,
         'align': 'center',
-        'valign': 'vcenter'
+        'valign': 'vcenter',
+        'fg_color': 'white'
         })
 
     worksheets = ['Recapitulatif_Operateurs', 'Recapitulatif_Réseaux']
@@ -199,8 +200,14 @@ def export_report_file(path):
             if i_worksheet == 0:
                 create_content(worksheet, 'Recapitulatif par opérateur',
                                           cell_header, cell_format, 8 + i + position[i], 'E', values, layer)
-                worksheet.write(8 + i + position[i], 0, item)
-                worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0])
+                if len(values) > 0:
+                    worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
+                                                           8 + i + position[i] + len(values)), item)
+                    worksheet.merge_range('C{}:C{}'.format(8 + i + position[i] + 1,
+                                                       8 + i + position[i] + len(values)), count_pdf_file(item)[0])
+                else:
+                    worksheet.write(8 + i + position[i], 0, item)
+                    worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0])
 
             if i_worksheet == 1:
                 worksheet_rsx = workbook.add_worksheet(item)

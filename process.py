@@ -4,7 +4,7 @@
 import os
 from os.path import join, basename, exists
 from qgis.core import QgsProject, QgsVectorLayer
-from qgis.gui import QgsMessageBar
+from qgis.PyQt.QtWidgets import QMessageBox
 from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
@@ -116,9 +116,9 @@ def export_xlsx_report(path):
     try:
         export_report_file(path)
     except PermissionError:
-        QgsMessageBar.pushWarning('Undermap', "QGIS ne peut pas écrire "
+        QMessageBox.warning(None, 'Undermap', "QGIS ne peut pas écrire "
                                                          "le rapport car le fichier"
-                                                             ":{} est ouvert "
+                                                             " {} est ouvert "
                                                          "dans une autre application"
                                                         .format(join(path, QgsProject.instance()
                                                         .baseName()+'.xlsx')))

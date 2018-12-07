@@ -1,5 +1,5 @@
 # coding=utf-8
-import os, shutil, typing
+import os, shutil, typing, csv
 from os.path import isfile, dirname, join, isdir, basename
 from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, QgsMessageLog
 from qgis.gui import QgsMessageBar
@@ -181,3 +181,49 @@ def count_pdf_file(dir_name):
         nbr_file.append(nbr)
 
     return nbr_file
+
+def count_csv_line(csv_file):
+    """ Compter le nombre de line dans un fichier csv
+
+    :param csv_file: le fichier csv à compter
+    :type csv_file: str
+
+    :return: Le nombre des ligne du fichier
+    :rtype: Integer
+    """
+    with open(csv_file) as count_file:
+        csv_reader = csv.reader(count_file)
+        row_count = sum(1 for row in csv_reader)
+        return row_count
+
+
+def avg_residual(gcp_file):
+    """
+
+    :param gcp_file:
+    :return:
+    """
+    with open(gcp_file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        residual = []
+        for row in csv_reader:
+            residual.append(row[7])
+    residual_values =  list(map(float, residual[1:-1]))
+    avg = sum(residual_values)/len(residual_values)
+    return avg
+
+
+def max_residual(gcp_file):
+    """
+
+    :param gcp_file:
+    :return:
+    """
+
+    with open(gcp_file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        residual = []
+        for row in csv_reader:
+            residual.append(row[7])
+    residual_values =  list(map(float, residual[1:-1]))
+    return max(residual_values)

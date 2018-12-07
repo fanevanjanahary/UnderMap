@@ -1,4 +1,6 @@
 # coding=utf-8
+
+from os import listdir
 from os.path import join
 from qgis.core import QgsVectorLayer, QgsProject
 from UnderMap.library_extras import xlsxwriter
@@ -8,7 +10,10 @@ from UnderMap.utilities.utilities import (
     get_project_path,
     get_operators,
     LOGO_PATH,
-    count_pdf_file
+    count_pdf_file,
+    count_csv_line,
+    avg_residual,
+    max_residual
 )
 
 def cell_color(rsx, cell_format):
@@ -99,7 +104,7 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
     last_row = row
 
     for i, item_value in enumerate(data):
-        last_row  += i
+
         col_liner = 0
         sum_by_class = 0
         worksheet.write(row + i, cell_cord - 1, item_value, cell_color(item_value, cell_format))
@@ -137,6 +142,7 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
                             cell_color(item_value, cell_format))
             col_liner += 4
             sum_by_class += 1
+        last_row  += 1
     return last_row
 
 
@@ -157,6 +163,42 @@ def get_position_operators(operators_path, operators_content):
             positions.append(value)
     return positions
 
+
+def georeference_report(path, operator_name, row, worksheet, header_format):
+
+    worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
+    worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
+    worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methodede calage', header_format)
+    worksheet.merge_range('E{}:F{}'.format(row, row), 'Ecart (m)', header_format)
+    worksheet.merge_range('G{}:H{}'.format(row, row), 'Ecart (pix)', header_format)
+    worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
+    worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
+    ECART = ['Moyen', 'Max']
+    ecart_cell = 0
+    while ecart_cell < 3:
+        for i, item in enumerate(ECART):
+            worksheet.write(row  , 4 + i + ecart_cell, item, header_format)
+        ecart_cell += 2
+
+    operator_path = join(path, 'RSX', operator_name)
+    tif_path = join(operator_path, 'TIF')
+    points = []
+    for item in listdir(tif_path):
+        points.append(item)
+
+
+    pdf_path_to_treat = join(operator_path, 'PDF', 'A-TRAITER')
+    for i_pdf_to_treat, item_pdf_to_treat in enumerate(listdir(pdf_path_to_treat)):
+        worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
+        gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
+        if gcp_file_name in points:
+            gcp_file = join(tif_path, gcp_file_name)
+            worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
+            worksheet.write(row + 1 + i_pdf_to_treat, 4, avg_residual(gcp_file))
+            worksheet.write(row + 1 + i_pdf_to_treat, 5, max_residual(gcp_file))
+
+        else:
+            worksheet.write(row + 1 + i_pdf_to_treat, 1, 0)
 
 
 def export_report_file(path):
@@ -211,12 +253,13 @@ def export_report_file(path):
 
             if i_worksheet == 1:
                 worksheet_rsx = workbook.add_worksheet(item)
-                create_content(worksheet_rsx, item, cell_header, cell_format, 8, 'F', values, layer)
+                last_row = create_content(worksheet_rsx, item, cell_header, cell_format, 8, 'F', values, layer)
                 for i_count_file, item_count_file in enumerate(count_pdf_file(item)[:2]):
                     worksheet_rsx.write(8, i_count_file + 1, item_count_file)
                 worksheet_rsx.write_formula(8, 3,
                             '=${}%d+${}%d'.format('B', 'C')%(8 + 1, 8 + 1)
                 )
+                georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
 
         if i_worksheet ==  1:
             create_content(worksheet, 'Recapitulatif par réseau', cell_header, cell_format, 8, 'B', rsx_color, None)

@@ -115,10 +115,7 @@ def initialise_emprise(kml_file):
 def export_xlsx_report(path):
     try:
         export_report_file(path)
+        return True
     except PermissionError:
-        QMessageBox.warning(None, 'Undermap', "QGIS ne peut pas écrire "
-                                                         "le rapport car le fichier"
-                                                             " {} est ouvert "
-                                                         "dans une autre application"
-                                                        .format(join(path, QgsProject.instance()
-                                                        .baseName()+'.xlsx')))
+        return False
+

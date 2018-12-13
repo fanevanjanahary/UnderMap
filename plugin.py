@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-import logging
+import os, logging
 from os.path import dirname, join, exists
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, QgsProject
 
 # Initialize Qt resources from file resources.py
 # from .resources import *
@@ -228,4 +228,15 @@ class UnderMap:
             QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
             return
         else:
-            export_xlsx_report(project_path)
+            if export_xlsx_report(project_path):
+                self.iface.messageBar().pushInfo('Undermap', "La génération du rapport a bien reussi."
+                                                            )
+                os.startfile(join(project_path, QgsProject.instance().baseName()+'.xlsx'))
+            else:
+                QMessageBox.warning(None, 'Undermap', "QGIS ne peut pas écrire "
+                                                         "le rapport car le fichier"
+                                                             " {} est ouvert "
+                                                         "dans une autre application"
+                                                        .format(join(project_path, QgsProject.instance()
+                                                        .baseName()+'.xlsx')))
+

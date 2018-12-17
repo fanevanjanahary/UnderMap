@@ -9,7 +9,6 @@ from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
     OPERATOR_SUB_DIR,
-    QML_PATH,
     create_dir,
     copy_file,
     get_project_path,
@@ -62,7 +61,7 @@ def create_operator(name, pdf):
             os.makedirs(join(operator_dir, item_operator_sub_dir))
             if item_operator_sub_dir == 'SHP':
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)
-                add_layer_in_group(layer, qgis_groups.findGroup("RSX"), QML_PATH)
+                add_layer_in_group(layer, qgis_groups.findGroup("RSX"), 'line_style.qml')
             elif item_operator_sub_dir == 'PDF':
                 for item_sous_pdf in PDF_SUB_DIR:
                     sub_pdf = join(operator_dir, item_operator_sub_dir, item_sous_pdf)
@@ -109,7 +108,7 @@ def initialise_emprise(kml_file):
     dxf_vl = QgsVectorLayer(kml_file[0], layer_name, "ogr")
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
-        add_layer_in_group(layer, qgis_groups.findGroup("Fond-Plan"), None)
+        add_layer_in_group(layer, qgis_groups.findGroup("Fond-Plan"), 'emprise_style.qml')
 
 
 def export_xlsx_report(path):

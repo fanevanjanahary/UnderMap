@@ -43,21 +43,24 @@ def create_field(definition):
     return field
 
 
-def add_layer_in_group(layer, group, style_path):
+def add_layer_in_group(layer, group, style_file):
     """ Ajouter une couche dans un groupe dans qgis
 
     :param layer: Couche à ajouter
     :type: layer: QgsVectorLayer
 
-    :param group:
-    :param style_path:
+    :param group: Nom de groupe dans qgis
+    :type group: str
+
+    :param style_file: Le fichier QML
+    :type style_file: str
 
     """
     QgsProject.instance().addMapLayer(layer, False)
     if layer.isValid():
         group.addLayer(layer)
-    if style_path is not None:
-        layer.loadNamedStyle(join(style_path, 'line_style.qml'))
+    if style_file is not None:
+        layer.loadNamedStyle(join(QML_PATH, style_file))
        
 
 def save_as_shp(file_to_convert, shp_path, crs):

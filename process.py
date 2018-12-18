@@ -4,7 +4,6 @@
 import os
 from os.path import join, basename, exists
 from qgis.core import QgsProject, QgsVectorLayer
-from qgis.PyQt.QtWidgets import QMessageBox
 from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
@@ -112,6 +111,12 @@ def initialise_emprise(kml_file):
 
 
 def export_xlsx_report(path):
+    """Générer le fichier de rapport xlsx
+
+    :param path: chemin du projet
+    :return: l'état de géneration
+    :rtype: Boolean
+    """
     try:
         export_report_file(path)
         return True

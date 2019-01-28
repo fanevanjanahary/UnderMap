@@ -12,8 +12,7 @@ from UnderMap.utilities.utilities import (
     LOGO_PATH,
     count_pdf_file,
     count_csv_line,
-    avg_residual,
-    max_residual
+    residual_list
 )
 
 def cell_color(rsx, cell_format):
@@ -187,18 +186,24 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
         points.append(item)
 
 
+
     pdf_path_to_treat = join(operator_path, 'PDF', 'A-TRAITER')
-    for i_pdf_to_treat, item_pdf_to_treat in enumerate(listdir(pdf_path_to_treat)):
-        worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
+    list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
+    for i_pdf_to_treat, item_pdf_to_treat in enumerate(list_pdf):
         gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
         if gcp_file_name in points:
+            worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
             gcp_file = join(tif_path, gcp_file_name)
-            worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
-            worksheet.write(row + 1 + i_pdf_to_treat, 4, avg_residual(gcp_file))
-            worksheet.write(row + 1 + i_pdf_to_treat, 5, max_residual(gcp_file))
+            list_of_residual = residual_list(gcp_file)
+            if list_of_residual > 0 :
+                worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
+                worksheet.write(row + 1 + i_pdf_to_treat, 4, sum(list_of_residual)/len(list_of_residual))
+                worksheet.write(row + 1 + i_pdf_to_treat, 5, max(list_of_residual))
+            else:
+                return
 
         else:
-            worksheet.write(row + 1 + i_pdf_to_treat, 1, 0)
+           return
 
 
 def export_report_file(path):
@@ -246,7 +251,7 @@ def export_report_file(path):
             if i_worksheet == 0:
                 create_content(worksheet, 'Recapitulatif par opérateur',
                                           cell_header, cell_format, 8 + i + position[i], 'E', values, layer)
-                if len(values) > 0:
+                if len(values) > 1:
                     worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
                                                            8 + i + position[i] + len(values)), item,
                                                             cell_rsx_format)
@@ -257,6 +262,7 @@ def export_report_file(path):
                                                        8 + i + position[i] + len(values)), count_pdf_file(item)[0],
                                                         cell_rsx_format)
                 else:
+                    
                     worksheet.write(8 + i + position[i], 0, item, cell_rsx_format)
                     worksheet.write(8 + i + position[i], 1, '', cell_rsx_format)
                     worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0], cell_rsx_format)

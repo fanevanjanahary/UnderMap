@@ -177,7 +177,7 @@ def count_pdf_file(dir_name):
     pdf_path_opr = join(operator_path, 'PDF')
     for item_dir_pdf in get_operators(pdf_path_opr):
         sub_pdf = join(pdf_path_opr, item_dir_pdf)
-        nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file))])
+        nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file)) and file.endswith(".pdf")])
         nbr_file.append(nbr)
 
     return nbr_file
@@ -191,29 +191,17 @@ def count_csv_line(csv_file):
     :return: Le nombre des ligne du fichier
     :rtype: Integer
     """
+
     with open(csv_file) as count_file:
         csv_reader = csv.reader(count_file)
-        row_count = sum(1 for row in csv_reader)
+        try:
+            row_count = sum(1 for row in csv_reader)
+        except:
+            return 0
         return row_count
 
 
-def avg_residual(gcp_file):
-    """
-
-    :param gcp_file:
-    :return:
-    """
-    with open(gcp_file) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        residual = []
-        for row in csv_reader:
-            residual.append(row[7])
-    residual_values =  list(map(float, residual[1:-1]))
-    avg = sum(residual_values)/len(residual_values)
-    return avg
-
-
-def max_residual(gcp_file):
+def residual_list(gcp_file):
     """
 
     :param gcp_file:
@@ -224,6 +212,9 @@ def max_residual(gcp_file):
         csv_reader = csv.reader(csv_file, delimiter=',')
         residual = []
         for row in csv_reader:
-            residual.append(row[7])
-    residual_values =  list(map(float, residual[1:-1]))
-    return max(residual_values)
+            if len(row) >= 7:
+                residual.append(row[7])
+            else:
+                return residual
+    return list(map(float, residual[1:-1]))
+

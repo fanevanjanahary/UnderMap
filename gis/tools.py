@@ -161,7 +161,7 @@ def length_feature(layer, rsx, cls, abd):
         for f in features:
             geom = f.geometry()
             sum += geom.length()
-        return sum
+        return round(sum)
     except AttributeError:
         return sum
 

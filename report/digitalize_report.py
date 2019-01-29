@@ -3,7 +3,6 @@
 from os import listdir
 from os.path import join
 from qgis.core import QgsVectorLayer, QgsProject
-from UnderMap.library_extras import xlsxwriter
 from UnderMap.gis.tools import length_feature
 from UnderMap.definition.fields import rsx_color
 from UnderMap.utilities.utilities import (
@@ -15,7 +14,14 @@ from UnderMap.utilities.utilities import (
     residual_list
 )
 
-def cell_color(rsx, cell_format):
+def cell_color(rsx, workbook):
+    cell_format = workbook.add_format({
+        'bold': 1,
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        }
+    )
     cell_format.set_fg_color(rsx_color[rsx])
     return cell_format
 
@@ -68,7 +74,7 @@ def create_head_content(worksheet, title, header_format, cell):
         worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title, header_format)
 
 
-def create_content(worksheet, worksheet_title, cell_header, cell_format, row, column, data, layer):
+def create_content(worksheet, worksheet_title, cell_header, workbook, row, column, data, layer):
     """ Création de contenue type de réseau
 
     :param worksheet: La feuille de travail
@@ -80,8 +86,8 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
     :param cell_header: Style entête de la feuille
     :type cell_header: Format
 
-    :param cell_format: Style entête contenue
-    :type cell_format: Format
+    :param workbook: Le fichier xlsx
+    :type workbook: Workbook
 
     :param data: Les données à insérer
     :type data: List
@@ -105,8 +111,8 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
 
         col_liner = 0
         sum_by_class = 0
-        worksheet.write(row + i, cell_cord - 1, item_value, cell_color(item_value, cell_format))
-        worksheet.write(row + i, cell_cord + 12, '', cell_color(item_value, cell_format))
+        worksheet.write(row + i, cell_cord - 1, item_value, cell_color(item_value, workbook))
+        worksheet.write(row + i, cell_cord + 12, '', cell_color(item_value, workbook))
         for j, item_class in enumerate(['A', 'B', 'C']):
 
             if layer is None:
@@ -114,17 +120,17 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
                                  '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
                                         .format(chr(ord('E') + j),
                                         chr(ord('E') + j)) % (row + i+ 1),
-                                 cell_color(item_value, cell_format))
-                worksheet.write_formula(row + i, cell_cord + 4 +j,
+                                        cell_color(item_value, workbook))
+                worksheet.write_formula(row + i, cell_cord + 4 + j,
                                  '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
                                         .format(chr(ord('I') + j),
                                         chr(ord('I') + j)) % (row + i+ 1),
-                                 cell_color(item_value, cell_color(item_value, cell_format)))
+                                        cell_color(item_value, workbook))
             else:
                 worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
-                                cell_color(item_value, cell_format))
-                worksheet.write(row + i, cell_cord + 4 +j, length_feature(layer, item_value, item_class,1),
-                                cell_color(item_value, cell_format))
+                                cell_color(item_value, workbook))
+                worksheet.write(row + i, cell_cord + 4 + j, length_feature(layer, item_value, item_class,1),
+                                cell_color(item_value, workbook))
 
         while sum_by_class<3 and col_liner < 9:
             cell_length_class = cell_letter_to_nbr + col_liner
@@ -133,12 +139,12 @@ def create_content(worksheet, worksheet_title, cell_header, cell_format, row, co
             cell_sum_by_class = cell_cord + sum_by_class + 8
             worksheet.write_formula(row + i, cell_sum_by_func,
                             '=SUM(${}%d:${}%d)'.format(chr(cell_length_class), chr(cell_length_class + 2)) %
-                            (row + i + 1, row + i + 1),
-                            cell_color(item_value, cell_format))
+                                    (row + i + 1, row + i + 1),
+                                    cell_color(item_value, workbook))
             worksheet.write_formula(row + i, cell_sum_by_class,
                             '=${}%d+${}%d'.format(chr(cell_by_class), chr(cell_by_class + 4)) %
-                            (row + i + 1, row + i + 1),
-                            cell_color(item_value, cell_format))
+                                    (row + i + 1, row + i + 1),
+                                    cell_color(item_value, workbook))
             col_liner += 4
             sum_by_class += 1
         last_row  += 1
@@ -197,8 +203,9 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             list_of_residual = residual_list(gcp_file)
             if len(list_of_residual) > 0 :
                 worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
-                worksheet.write(row + 1 + i_pdf_to_treat, 4, sum(list_of_residual)/len(list_of_residual))
-                worksheet.write(row + 1 + i_pdf_to_treat, 5, max(list_of_residual))
+                worksheet.write(row + 1 + i_pdf_to_treat, 4, round(
+                    sum(list_of_residual)/len(list_of_residual), 2))
+                worksheet.write(row + 1 + i_pdf_to_treat, 5, round(max(list_of_residual), 2))
             else:
                 return
 
@@ -206,14 +213,10 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
            return
 
 
-def export_report_file(path):
+def export_report_file(workbook, path):
 
-    name_file = QgsProject.instance().baseName()
-    file = join(path, name_file+'.xlsx')
-    workbook = xlsxwriter.Workbook(file)
     operators_path = join(path, 'RSX')
     operators_content = get_operators(operators_path)
-
 
     cell_header = workbook.add_format({
         'bold': 1,
@@ -221,20 +224,14 @@ def export_report_file(path):
         'align': 'center',
         'valign': 'vcenter',
         'fg_color': '#bebebe'})
-    cell_header.set_text_wrap()
-    cell_format = workbook.add_format({
-        'bold': 1,
-        'border': 1,
-        'align': 'center',
-        'valign': 'vcenter',
-        })
     cell_rsx_format = workbook.add_format({
         'bold': 1,
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
-        })
-
+    })
+    cell_header.set_text_wrap()
+    cell_rsx_format.set_text_wrap()
     worksheets = ['Recapitulatif_Operateurs', 'Recapitulatif_Réseaux']
 
     position = get_position_operators(operators_path, operators_content)
@@ -250,14 +247,14 @@ def export_report_file(path):
 
             if i_worksheet == 0:
                 create_content(worksheet, 'Recapitulatif par opérateur',
-                                          cell_header, cell_format, 8 + i + position[i], 'E', values, layer)
+                                          cell_header, workbook, 8 + i + position[i], 'E', values, layer)
                 if len(values) > 1:
                     worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
                                                            8 + i + position[i] + len(values)), item,
-                                                            cell_rsx_format)
+                                                           cell_rsx_format)
                     worksheet.merge_range('B{}:B{}'.format(8 + i + position[i] + 1,
                                                        8 + i + position[i] + len(values)), '',
-                                                            cell_rsx_format)
+                                                           cell_rsx_format)
                     worksheet.merge_range('C{}:C{}'.format(8 + i + position[i] + 1,
                                                        8 + i + position[i] + len(values)), count_pdf_file(item)[0],
                                                         cell_rsx_format)
@@ -271,7 +268,7 @@ def export_report_file(path):
                     worksheet_rsx = workbook.add_worksheet(item)
                 except:
                      worksheet_rsx = workbook.add_worksheet(item[0:30])
-                last_row = create_content(worksheet_rsx, item, cell_header, cell_format, 8, 'F', values, layer)
+                last_row = create_content(worksheet_rsx, item, cell_header, workbook, 8, 'F', values, layer)
                 for i_count_file, item_count_file in enumerate(count_pdf_file(item)[:2]):
                     worksheet_rsx.write(8, i_count_file + 1, item_count_file)
                 worksheet_rsx.write_formula(8, 3,
@@ -280,6 +277,6 @@ def export_report_file(path):
                 georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
 
         if i_worksheet ==  1:
-            create_content(worksheet, 'Recapitulatif par réseau', cell_header, cell_format, 8, 'B', rsx_color, None)
+            create_content(worksheet, 'Recapitulatif par réseau', cell_header, workbook, 8, 'B', rsx_color, None)
 
     workbook.close()

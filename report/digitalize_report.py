@@ -195,7 +195,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
-            if list_of_residual > 0 :
+            if len(list_of_residual) > 0 :
                 worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
                 worksheet.write(row + 1 + i_pdf_to_treat, 4, sum(list_of_residual)/len(list_of_residual))
                 worksheet.write(row + 1 + i_pdf_to_treat, 5, max(list_of_residual))
@@ -262,13 +262,15 @@ def export_report_file(path):
                                                        8 + i + position[i] + len(values)), count_pdf_file(item)[0],
                                                         cell_rsx_format)
                 else:
-                    
                     worksheet.write(8 + i + position[i], 0, item, cell_rsx_format)
                     worksheet.write(8 + i + position[i], 1, '', cell_rsx_format)
                     worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0], cell_rsx_format)
 
             if i_worksheet == 1:
-                worksheet_rsx = workbook.add_worksheet(item)
+                try:
+                    worksheet_rsx = workbook.add_worksheet(item)
+                except:
+                     worksheet_rsx = workbook.add_worksheet(item[0:30])
                 last_row = create_content(worksheet_rsx, item, cell_header, cell_format, 8, 'F', values, layer)
                 for i_count_file, item_count_file in enumerate(count_pdf_file(item)[:2]):
                     worksheet_rsx.write(8, i_count_file + 1, item_count_file)

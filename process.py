@@ -4,6 +4,7 @@
 import os
 from os.path import join, basename, exists
 from qgis.core import QgsProject, QgsVectorLayer
+from UnderMap.library_extras import xlsxwriter
 from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
@@ -117,8 +118,12 @@ def export_xlsx_report(path):
     :return: l'état de géneration
     :rtype: Boolean
     """
+    name_file = QgsProject.instance().baseName()
+    file = join(path, name_file+'.xlsx')
+    workbook = xlsxwriter.Workbook(file)
+
     try:
-        export_report_file(path)
+        export_report_file(workbook, path)
         return True
     except PermissionError:
         return False

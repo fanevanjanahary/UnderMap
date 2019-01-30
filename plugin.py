@@ -211,7 +211,7 @@ class UnderMap:
     def initialise_emprise(self):
         project_path = get_project_path()
         if project_path == './':
-            QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
+            QMessageBox.warning(None, "Avertissement", "Veuillez ouvrir un projet QGIS et l’enregistrer")
             return
         else:
             fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.kml")
@@ -225,7 +225,7 @@ class UnderMap:
     def export_report(self):
         project_path = get_project_path()
         if project_path == './':
-            QMessageBox.warning(None, "Avertisment", "Veulliez ouvrir un projet qgis")
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
             return
         else:
             if export_xlsx_report(project_path):

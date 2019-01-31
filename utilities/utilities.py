@@ -88,18 +88,18 @@ def create_dir(dir_path, dir_name):
         os.makedirs(new_dir)
 
 
-def get_operators(path_brute):
+def get_folders_name(path):
     """ Mettre dans une liste le nom de tous les dossier depuis donné bruite
 
-    :param path_brute: Chemin de la donnée brute
-    :type path_brute: str
+    :param path: Chemin de la racine
+    :type path: str
 
     :return: Liste de dossier
     :rtype: list
     """
     operators_folder_name = []
-    for item in os.listdir(path_brute):
-        if isdir(join(path_brute, item)):
+    for item in os.listdir(path):
+        if isdir(join(path, item)):
             operators_folder_name.append(item)
     return operators_folder_name
 
@@ -176,7 +176,7 @@ def count_pdf_file(dir_name):
     operator_path = join(path, RSX_SUB_GROUP[0], dir_name)
     nbr_file = []
     pdf_path_opr = join(operator_path, OPERATOR_SUB_DIR[0])
-    for item_dir_pdf in get_operators(pdf_path_opr):
+    for item_dir_pdf in get_folders_name(pdf_path_opr):
         sub_pdf = join(pdf_path_opr, item_dir_pdf)
         nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file)) and file.endswith(".pdf")])
         nbr_file.append(nbr)

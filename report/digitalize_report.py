@@ -1,13 +1,13 @@
 # coding=utf-8
 
-from os import listdir
-from os.path import join
+from os import listdir, rename, rmdir
+from os.path import join, exists
 from qgis.core import QgsVectorLayer, QgsProject
 from UnderMap.gis.tools import length_feature
 from UnderMap.definition.fields import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
-    get_operators,
+    get_folders_name,
     count_pdf_file,
     count_csv_line,
     residual_list,
@@ -17,6 +17,8 @@ from UnderMap.utilities.utilities import (
     RSX_SUB_GROUP,
     PDF_SUB_DIR
 )
+
+ECART = ['Moyen', 'Max']
 
 def cell_color(rsx, workbook):
     cell_format = workbook.add_format({
@@ -36,7 +38,7 @@ def create_head_content(worksheet, title, header_format, cell):
     cell_to_nbr = ord(cell)
     cell_incr = 0
     item_head = 1
-    head = ['Lineaire réseau (m)', 'En services', 'Abandonné', 'Total', 'Remarques']
+    head = ['Lineaire réseau (m)', 'En service', 'Abandonné', 'Total', 'Remarques']
 
     worksheet.set_column('A:A', 25)
     worksheet.insert_image('A1', logo)
@@ -182,7 +184,6 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     worksheet.merge_range('G{}:H{}'.format(row, row), 'Ecart (pix)', header_format)
     worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
     worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
-    ECART = ['Moyen', 'Max']
     ecart_cell = 0
     while ecart_cell < 3:
         for i, item in enumerate(ECART):
@@ -195,10 +196,18 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     for item in listdir(tif_path):
         points.append(item)
 
+    pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
+    pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
+    try:
+        list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
+    except FileNotFoundError:
+        rename(join(pdf_root, 'A-TRAITER'), pdf_path_to_treat)
+        list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
+        if exists(join(pdf_root, 'IGNORE')):
+            rename(join(pdf_root, 'IGNORE'), join(pdf_root, PDF_SUB_DIR[1]))
+        if exists(join(pdf_root, 'UTILE')):
+            rmdir(join(pdf_root, 'UTILE'))
 
-
-    pdf_path_to_treat = join(operator_path, OPERATOR_SUB_DIR[0], PDF_SUB_DIR[0])
-    list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
     for i_pdf_to_treat, item_pdf_to_treat in enumerate(list_pdf):
         gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
         if gcp_file_name in points:
@@ -220,7 +229,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 def export_report_file(workbook, path):
 
     operators_path = join(path, RSX_SUB_GROUP[0])
-    operators_content = get_operators(operators_path)
+    operators_content = get_folders_name(operators_path)
 
     cell_header = workbook.add_format({
         'bold': 1,
@@ -281,6 +290,6 @@ def export_report_file(workbook, path):
                 georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
 
         if i_worksheet ==  1:
-            create_content(worksheet, 'Synthèse par réseau', cell_header, workbook, 8, 'B', rsx_color, None)
+            create_content(worksheet, 'Synthèse par réseau', cell_header, workbook, 8, 'B', sorted(rsx_color), None)
 
     workbook.close()

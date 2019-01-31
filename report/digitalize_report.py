@@ -60,7 +60,7 @@ def create_head_content(worksheet, title, header_format, cell):
                  worksheet.write(7, cell_head + i - 65, 'Classe {}'.format(item), header_format)
     if cell == 'E':
         worksheet.set_column('B:B', 20)
-        worksheet.merge_range('A6:A8', 'Opérateur', header_format)
+        worksheet.merge_range('A6:A8', 'exploitant', header_format)
         worksheet.merge_range('B6:B8', 'Etat', header_format)
         worksheet.merge_range('C6:C8', 'Pages Traitées', header_format)
         worksheet.merge_range('D6:D8', 'Type de réseau', header_format)
@@ -259,7 +259,7 @@ def export_report_file(workbook, path):
             values = sorted(layer.uniqueValues(field))
 
             if i_worksheet == 0:
-                create_content(worksheet, 'Synthèse par opérateur',
+                create_content(worksheet, 'Synthèse par exploitant',
                                           cell_header, workbook, 8 + i + position[i], 'E', values, layer)
                 if len(values) > 1:
                     worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,

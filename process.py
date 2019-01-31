@@ -9,6 +9,7 @@ from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
     PDF_SUB_DIR,
     OPERATOR_SUB_DIR,
+    RSX_SUB_GROUP,
     create_dir,
     copy_file,
     get_project_path,
@@ -47,7 +48,7 @@ def create_operator(name, pdf):
     :param pdf: Le(s) fichier(s) pdf associé(s) à un opérateur
     :type pdf: str
     """
-    root = join(get_project_path(), 'RSX')
+    root = join(get_project_path(), RSX_SUB_GROUP[0])
     operator_dir = join(root, name)
     qgis_groups = get_group()
     tif_group = qgis_groups.findGroup("TIF")

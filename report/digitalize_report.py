@@ -8,10 +8,14 @@ from UnderMap.definition.fields import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
     get_operators,
-    LOGO_PATH,
     count_pdf_file,
     count_csv_line,
-    residual_list
+    residual_list,
+    LOGO_PATH,
+    WORKSHEETS,
+    OPERATOR_SUB_DIR,
+    RSX_SUB_GROUP,
+    PDF_SUB_DIR
 )
 
 def cell_color(rsx, workbook):
@@ -32,7 +36,7 @@ def create_head_content(worksheet, title, header_format, cell):
     cell_to_nbr = ord(cell)
     cell_incr = 0
     item_head = 1
-    head = ['Lineaire réseau (m)', 'En fonction', 'Abandonné', 'Total', 'Remarques']
+    head = ['Lineaire réseau (m)', 'En services', 'Abandonné', 'Total', 'Remarques']
 
     worksheet.set_column('A:A', 25)
     worksheet.insert_image('A1', logo)
@@ -117,13 +121,13 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
 
             if layer is None:
                 worksheet.write_formula(row + i, cell_cord + j,
-                                 '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
-                                        .format(chr(ord('E') + j),
+                                 '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
+                                        .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('E') + j),
                                         chr(ord('E') + j)) % (row + i+ 1),
                                         cell_color(item_value, workbook))
                 worksheet.write_formula(row + i, cell_cord + 4 + j,
-                                 '=SUMIF(Recapitulatif_Operateurs!D9:D9999, $A%d, Recapitulatif_Operateurs!{}9:{}9999)'
-                                        .format(chr(ord('I') + j),
+                                 '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
+                                        .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('I') + j),
                                         chr(ord('I') + j)) % (row + i+ 1),
                                         cell_color(item_value, workbook))
             else:
@@ -156,7 +160,7 @@ def get_position_operators(operators_path, operators_content):
     positions = [0]
     value = 0
     for i, item in enumerate(operators_content):
-        layer_path = join(operators_path, item, 'SHP', item)
+        layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
         layer = QgsVectorLayer(layer_path+".shp")
         field = layer.dataProvider().fieldNameIndex('Reseau')
         values = sorted(layer.uniqueValues(field))
@@ -185,15 +189,15 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             worksheet.write(row  , 4 + i + ecart_cell, item, header_format)
         ecart_cell += 2
 
-    operator_path = join(path, 'RSX', operator_name)
-    tif_path = join(operator_path, 'TIF')
+    operator_path = join(path, RSX_SUB_GROUP[0], operator_name)
+    tif_path = join(operator_path, RSX_SUB_GROUP[1])
     points = []
     for item in listdir(tif_path):
         points.append(item)
 
 
 
-    pdf_path_to_treat = join(operator_path, 'PDF', 'A-TRAITER')
+    pdf_path_to_treat = join(operator_path, OPERATOR_SUB_DIR[0], PDF_SUB_DIR[0])
     list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
     for i_pdf_to_treat, item_pdf_to_treat in enumerate(list_pdf):
         gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
@@ -215,7 +219,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 
 def export_report_file(workbook, path):
 
-    operators_path = join(path, 'RSX')
+    operators_path = join(path, RSX_SUB_GROUP[0])
     operators_content = get_operators(operators_path)
 
     cell_header = workbook.add_format({
@@ -232,21 +236,21 @@ def export_report_file(workbook, path):
     })
     cell_header.set_text_wrap()
     cell_rsx_format.set_text_wrap()
-    worksheets = ['Recapitulatif_Operateurs', 'Recapitulatif_Réseaux']
+
 
     position = get_position_operators(operators_path, operators_content)
 
-    for i_worksheet, item_worksheet in  enumerate(worksheets):
+    for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
 
         worksheet = workbook.add_worksheet(item_worksheet)
         for i, item in enumerate(operators_content):
-            layer_path = join(operators_path, item, 'SHP', item)
+            layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
             layer = QgsVectorLayer(layer_path+".shp")
             field = layer.dataProvider().fieldNameIndex('Reseau')
             values = sorted(layer.uniqueValues(field))
 
             if i_worksheet == 0:
-                create_content(worksheet, 'Recapitulatif par opérateur',
+                create_content(worksheet, 'Synthèse par opérateur',
                                           cell_header, workbook, 8 + i + position[i], 'E', values, layer)
                 if len(values) > 1:
                     worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
@@ -277,6 +281,6 @@ def export_report_file(workbook, path):
                 georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
 
         if i_worksheet ==  1:
-            create_content(worksheet, 'Recapitulatif par réseau', cell_header, workbook, 8, 'B', rsx_color, None)
+            create_content(worksheet, 'Synthèse par réseau', cell_header, workbook, 8, 'B', rsx_color, None)
 
     workbook.close()

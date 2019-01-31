@@ -5,13 +5,14 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, Qgs
 from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
-PROJECT_GROUP = ['Reseau', 'Fond-Plan', 'Impression']
+PROJECT_GROUP = ['Reseaux', 'Fond de plan']
 RSX_SUB_GROUP = ['RSX', 'TIF', 'BUF']
 OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
 LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')
 PDF_SUB_DIR = ['PAGES A TRAITER', 'PAGES ANNEXES']
+WORKSHEETS = ['Synthèse_exploitants', 'Synthèse_réseaux']
 
 
 def get_project_path():
@@ -36,7 +37,7 @@ def copy_file(from_dir, to_dir, file_type):
     :param file_type: Type du fichier à copier
     :type file_type: str
     """
-    pdf_treat = join(to_dir, 'A-TRAITER')
+    pdf_treat = join(to_dir, PDF_SUB_DIR[0])
     if  isinstance(from_dir, typing.List):
         for item_path in from_dir:
             if isfile(item_path.replace('"', '')):
@@ -163,7 +164,7 @@ def split_pdf(pdf_file, to_dir):
 
 
 def count_pdf_file(dir_name):
-    """ Compter les fichiers dans le dossier PDF d'un opérateur d'un RSX
+    """ Compter les fichiers dans le dossier PDF d'un exploitant d'un RSX
 
     :param dir_name: Le nom de dossier
     :type dir_name: str
@@ -172,9 +173,9 @@ def count_pdf_file(dir_name):
     :rtype: list
     """
     path = get_project_path()
-    operator_path = join(path, 'RSX', dir_name)
+    operator_path = join(path, RSX_SUB_GROUP[0], dir_name)
     nbr_file = []
-    pdf_path_opr = join(operator_path, 'PDF')
+    pdf_path_opr = join(operator_path, OPERATOR_SUB_DIR[0])
     for item_dir_pdf in get_operators(pdf_path_opr):
         sub_pdf = join(pdf_path_opr, item_dir_pdf)
         nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file)) and file.endswith(".pdf")])

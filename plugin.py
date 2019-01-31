@@ -124,7 +124,7 @@ class UnderMap:
 
         self.addOperatorAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'ajouterOperateur.png')),
-            'Ajouter un opérateur',
+            'Ajouter un exploitant',
             self.iface.mainWindow())
 
         self.reportAction = QAction(

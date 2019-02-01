@@ -41,13 +41,14 @@ abandoned_def = {
 }
 
 rsx_color = {
-    'CC': '#D85DFF',
-    'MR': '#FFCCFF',
+    'ELEC': '#FF5353',
+    'GAZ': '#FFF411',
     'PC': '#FFB115',
     'AEP': '#97E4FF',
-    'ASS': '#7CAB80',
-    'GAZ': '#FFF411',
-    'SIG': '#BFBFBF',
+    'ASS': '#D6AB80',
+    'CC': '#D85DFF',
     'TEL': '#65F355',
-    'ELEC': '#FF5353'
+    'SIG': '#BFBFBF',
+    'MR': '#FFCCFF',
+
 }

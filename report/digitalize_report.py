@@ -20,7 +20,7 @@ from UnderMap.utilities.utilities import (
 
 ECART = ['Moyen', 'Max']
 
-def cell_color(rsx, workbook):
+def customize_cell_format(top, bottom, color, workbook):
     cell_format = workbook.add_format({
         'bold': 1,
         'border': 1,
@@ -28,12 +28,15 @@ def cell_color(rsx, workbook):
         'valign': 'vcenter',
         }
     )
-    cell_format.set_fg_color(rsx_color[rsx])
+    cell_format.set_fg_color(color)
+    if top is not None:
+        cell_format.set_top(top)
+    if bottom is not None:
+        cell_format.set_bottom(bottom)
     return cell_format
 
 
-
-def create_head_content(worksheet, title, header_format, cell):
+def create_head_content(worksheet, title, header_format, cell, workbook):
     logo = LOGO_PATH
     cell_to_nbr = ord(cell)
     cell_incr = 0
@@ -45,7 +48,8 @@ def create_head_content(worksheet, title, header_format, cell):
     worksheet.set_column('{}:{}'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), 40)
     worksheet.merge_range('{}6:{}6'.format(cell, chr(cell_to_nbr + 11)), head[0], header_format)
     worksheet.merge_range('{}6:{}8'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), head[4], header_format)
-    worksheet.merge_range('B2:{}2'.format(chr(cell_to_nbr + 11)), 'UnderMap', header_format)
+    worksheet.merge_range('B2:{}2'.format(chr(cell_to_nbr + 11)), 'UnderMap',
+                          customize_cell_format(1, 0, '#bebebe', workbook))
 
 
     while item_head < 4 and cell_incr < 9:
@@ -60,11 +64,12 @@ def create_head_content(worksheet, title, header_format, cell):
                  worksheet.write(7, cell_head + i - 65, 'Classe {}'.format(item), header_format)
     if cell == 'E':
         worksheet.set_column('B:B', 20)
-        worksheet.merge_range('A6:A8', 'exploitant', header_format)
+        worksheet.merge_range('A6:A8', 'Exploitant', header_format)
         worksheet.merge_range('B6:B8', 'Etat', header_format)
         worksheet.merge_range('C6:C8', 'Pages Traitées', header_format)
         worksheet.merge_range('D6:D8', 'Type de réseau', header_format)
-        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title, header_format)
+        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title,
+                              customize_cell_format(0, 1, '#bebebe', workbook))
 
     if cell == 'F':
         worksheet.merge_range('A6:A8', 'Etat', header_format)
@@ -73,11 +78,13 @@ def create_head_content(worksheet, title, header_format, cell):
         worksheet.merge_range('C7:C8', 'Ingorées', header_format)
         worksheet.merge_range('D7:D8', 'Total', header_format)
         worksheet.merge_range('E6:E8', 'Type de réseau', header_format)
-        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title, header_format)
+        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title,
+                              customize_cell_format(0, 1, '#bebebe', workbook))
 
     if cell == 'B':
         worksheet.merge_range('A6:A8', 'Réseau', header_format)
-        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title, header_format)
+        worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title,
+                              customize_cell_format(0, 1, '#bebebe', workbook))
 
 
 def create_content(worksheet, worksheet_title, cell_header, workbook, row, column, data, layer):
@@ -108,7 +115,7 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
     :type layer: QgsVectorLayer
     """
 
-    create_head_content(worksheet, worksheet_title, cell_header, column)
+    create_head_content(worksheet, worksheet_title, cell_header, column, workbook)
     cell_letter_to_nbr = ord(column)
     cell_cord = cell_letter_to_nbr - 65
     last_row = row
@@ -117,8 +124,9 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
 
         col_liner = 0
         sum_by_class = 0
-        worksheet.write(row + i, cell_cord - 1, item_value, cell_color(item_value, workbook))
-        worksheet.write(row + i, cell_cord + 12, '', cell_color(item_value, workbook))
+        cell_color = rsx_color[item_value]
+        worksheet.write(row + i, cell_cord - 1, item_value, customize_cell_format(None, None, cell_color, workbook))
+        worksheet.write(row + i, cell_cord + 12, '', customize_cell_format(None, None, cell_color, workbook))
         for j, item_class in enumerate(['A', 'B', 'C']):
 
             if layer is None:
@@ -126,17 +134,17 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
                                  '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
                                         .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('E') + j),
                                         chr(ord('E') + j)) % (row + i+ 1),
-                                        cell_color(item_value, workbook))
+                                        customize_cell_format(None, None, cell_color, workbook))
                 worksheet.write_formula(row + i, cell_cord + 4 + j,
                                  '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
                                         .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('I') + j),
                                         chr(ord('I') + j)) % (row + i+ 1),
-                                        cell_color(item_value, workbook))
+                                        customize_cell_format(None, None, cell_color, workbook))
             else:
                 worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
-                                cell_color(item_value, workbook))
+                                customize_cell_format(None, None, cell_color, workbook))
                 worksheet.write(row + i, cell_cord + 4 + j, length_feature(layer, item_value, item_class,1),
-                                cell_color(item_value, workbook))
+                                customize_cell_format(None, None, cell_color, workbook))
 
         while sum_by_class<3 and col_liner < 9:
             cell_length_class = cell_letter_to_nbr + col_liner
@@ -146,11 +154,11 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
             worksheet.write_formula(row + i, cell_sum_by_func,
                             '=SUM(${}%d:${}%d)'.format(chr(cell_length_class), chr(cell_length_class + 2)) %
                                     (row + i + 1, row + i + 1),
-                                    cell_color(item_value, workbook))
+                                    customize_cell_format(None, None, cell_color, workbook))
             worksheet.write_formula(row + i, cell_sum_by_class,
                             '=${}%d+${}%d'.format(chr(cell_by_class), chr(cell_by_class + 4)) %
                                     (row + i + 1, row + i + 1),
-                                    cell_color(item_value, workbook))
+                                    customize_cell_format(None, None, cell_color, workbook))
             col_liner += 4
             sum_by_class += 1
         last_row  += 1
@@ -259,8 +267,8 @@ def export_report_file(workbook, path):
             values = sorted(layer.uniqueValues(field))
 
             if i_worksheet == 0:
-                create_content(worksheet, 'Synthèse par exploitant',
-                                          cell_header, workbook, 8 + i + position[i], 'E', values, layer)
+                create_content(worksheet, 'Synthèse par exploitant', cell_header,
+                                          workbook, 8 + i + position[i], 'E', values, layer)
                 if len(values) > 1:
                     worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
                                                            8 + i + position[i] + len(values)), item,
@@ -281,7 +289,8 @@ def export_report_file(workbook, path):
                     worksheet_rsx = workbook.add_worksheet(item)
                 except:
                      worksheet_rsx = workbook.add_worksheet(item[0:30])
-                last_row = create_content(worksheet_rsx, item, cell_header, workbook, 8, 'F', values, layer)
+                last_row = create_content(worksheet_rsx, item, cell_header,
+                                          workbook, 8, 'F', values, layer)
                 for i_count_file, item_count_file in enumerate(count_pdf_file(item)[:2]):
                     worksheet_rsx.write(8, i_count_file + 1, item_count_file)
                 worksheet_rsx.write_formula(8, 3,
@@ -290,6 +299,7 @@ def export_report_file(workbook, path):
                 georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
 
         if i_worksheet ==  1:
-            create_content(worksheet, 'Synthèse par réseau', cell_header, workbook, 8, 'B', sorted(rsx_color), None)
+            create_content(worksheet, 'Synthèse par réseau', cell_header,
+                           workbook, 8, 'B', rsx_color, None)
 
     workbook.close()

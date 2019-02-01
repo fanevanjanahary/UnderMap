@@ -7,7 +7,7 @@ from UnderMap.gis.tools import length_feature
 from UnderMap.definition.fields import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
-    get_folders_name,
+    get_elements_name,
     count_pdf_file,
     count_csv_line,
     residual_list,
@@ -75,7 +75,7 @@ def create_head_content(worksheet, title, header_format, cell, workbook):
         worksheet.merge_range('A6:A8', 'Etat', header_format)
         worksheet.merge_range('B6:D6', 'Pages', header_format)
         worksheet.merge_range('B7:B8', 'Traitées', header_format)
-        worksheet.merge_range('C7:C8', 'Ingorées', header_format)
+        worksheet.merge_range('C7:C8', 'Annexes', header_format)
         worksheet.merge_range('D7:D8', 'Total', header_format)
         worksheet.merge_range('E6:E8', 'Type de réseau', header_format)
         worksheet.merge_range('B3:{}3'.format(chr(cell_to_nbr + 11)), title,
@@ -187,15 +187,16 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
-    worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methodede calage', header_format)
+    worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methode de calage', header_format)
     worksheet.merge_range('E{}:F{}'.format(row, row), 'Ecart (m)', header_format)
     worksheet.merge_range('G{}:H{}'.format(row, row), 'Ecart (pix)', header_format)
     worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
     worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
     ecart_cell = 0
+    nbr_pdf_to_treat = count_pdf_file(operator_name)[0]
     while ecart_cell < 3:
         for i, item in enumerate(ECART):
-            worksheet.write(row  , 4 + i + ecart_cell, item, header_format)
+            worksheet.write(row, 4 + i + ecart_cell, item, header_format)
         ecart_cell += 2
 
     operator_path = join(path, RSX_SUB_GROUP[0], operator_name)
@@ -203,7 +204,6 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     points = []
     for item in listdir(tif_path):
         points.append(item)
-
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
     pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
     try:
@@ -211,13 +211,14 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     except FileNotFoundError:
         rename(join(pdf_root, 'A-TRAITER'), pdf_path_to_treat)
         list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
-        if exists(join(pdf_root, 'IGNORE')):
-            rename(join(pdf_root, 'IGNORE'), join(pdf_root, PDF_SUB_DIR[1]))
         if exists(join(pdf_root, 'UTILE')):
-            rmdir(join(pdf_root, 'UTILE'))
+            rename(join(pdf_root, 'UTILE'), join(pdf_root, PDF_SUB_DIR[1]))
+        if exists(join(pdf_root, 'IGNORE')):
+            rmdir(join(pdf_root, 'IGNORE'))
 
     for i_pdf_to_treat, item_pdf_to_treat in enumerate(list_pdf):
         gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
+        pdf_modified = item_pdf_to_treat.replace('.pdf', '_modified.tif')
         if gcp_file_name in points:
             worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
             gcp_file = join(tif_path, gcp_file_name)
@@ -225,8 +226,16 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             if len(list_of_residual) > 0 :
                 worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
                 worksheet.write(row + 1 + i_pdf_to_treat, 4, round(
-                    sum(list_of_residual)/len(list_of_residual), 2))
+                    sum(list_of_residual)/(len(list_of_residual)+ 1), 2))
                 worksheet.write(row + 1 + i_pdf_to_treat, 5, round(max(list_of_residual), 2))
+                worksheet.merge_range('C{}:D{}'.format(row + 2 + nbr_pdf_to_treat, row + 2 + nbr_pdf_to_treat),
+                                      'Moyenne', header_format)
+                for i_cell_mean, cell_mean in enumerate(['E','F']):
+                    worksheet.write_formula(row + 1+ nbr_pdf_to_treat, 4+ i_cell_mean,
+                                            '=AVERAGE({}{}:{}{})'.format(cell_mean, row + 2
+                                                                         , cell_mean,
+                                                                         row+ 1+ nbr_pdf_to_treat),
+                                            )
             else:
                 return
 
@@ -237,8 +246,8 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 def export_report_file(workbook, path):
 
     operators_path = join(path, RSX_SUB_GROUP[0])
-    operators_content = get_folders_name(operators_path)
-
+    operators_content = get_elements_name(operators_path, True, None)
+    print(operators_content)
     cell_header = workbook.add_format({
         'bold': 1,
         'border': 1,
@@ -258,9 +267,8 @@ def export_report_file(workbook, path):
     position = get_position_operators(operators_path, operators_content)
 
     for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
-
         worksheet = workbook.add_worksheet(item_worksheet)
-        for i, item in enumerate(operators_content):
+        for i_op, item in enumerate(operators_content):
             layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
             layer = QgsVectorLayer(layer_path+".shp")
             field = layer.dataProvider().fieldNameIndex('Reseau')
@@ -268,21 +276,21 @@ def export_report_file(workbook, path):
 
             if i_worksheet == 0:
                 create_content(worksheet, 'Synthèse par exploitant', cell_header,
-                                          workbook, 8 + i + position[i], 'E', values, layer)
+                                          workbook, 8 + i_op + position[i_op], 'E', values, layer)
                 if len(values) > 1:
-                    worksheet.merge_range('A{}:A{}'.format(8 + i + position[i] + 1,
-                                                           8 + i + position[i] + len(values)), item,
+                    worksheet.merge_range('A{}:A{}'.format(8 + i_op + position[i_op] + 1,
+                                                           8 + i_op + position[i_op] + len(values)), item,
                                                            cell_rsx_format)
-                    worksheet.merge_range('B{}:B{}'.format(8 + i + position[i] + 1,
-                                                       8 + i + position[i] + len(values)), '',
+                    worksheet.merge_range('B{}:B{}'.format(8 + i_op + position[i_op] + 1,
+                                                       8 + i_op + position[i_op] + len(values)), '',
                                                            cell_rsx_format)
-                    worksheet.merge_range('C{}:C{}'.format(8 + i + position[i] + 1,
-                                                       8 + i + position[i] + len(values)), count_pdf_file(item)[0],
+                    worksheet.merge_range('C{}:C{}'.format(8 + i_op + position[i_op] + 1,
+                                                       8 + i_op + position[i_op] + len(values)), count_pdf_file(item)[0],
                                                         cell_rsx_format)
                 else:
-                    worksheet.write(8 + i + position[i], 0, item, cell_rsx_format)
-                    worksheet.write(8 + i + position[i], 1, '', cell_rsx_format)
-                    worksheet.write(8 + i + position[i], 2, count_pdf_file(item)[0], cell_rsx_format)
+                    worksheet.write(8 + i_op + position[i_op], 0, item, cell_rsx_format)
+                    worksheet.write(8 + i_op + position[i_op], 1, '', cell_rsx_format)
+                    worksheet.write(8 + i_op + position[i_op], 2, count_pdf_file(item)[0], cell_rsx_format)
 
             if i_worksheet == 1:
                 try:

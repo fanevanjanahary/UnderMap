@@ -35,6 +35,7 @@ from qgis.core import QgsSettings, QgsProject
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
+from .ui.add_pdf_dialog import DialogAddPDF
 from .utilities.utilities import get_project_path
 from UnderMap.process import (
     initialise_pdf,
@@ -79,6 +80,7 @@ class UnderMap:
         # Create the dialog (after translation) and keep reference
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
+        self.addpdf = DialogAddPDF()
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -95,6 +97,7 @@ class UnderMap:
         self.addOperatorAction = None
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
+        self.addPDFAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
 
@@ -142,12 +145,19 @@ class UnderMap:
             'Initialiser une emprise',
             self.iface.mainWindow())
 
+        self.addPDFAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Ajouter pdf',
+            self.iface.mainWindow())
+        self.addPDFAction.setEnabled(False)
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
         self.initialiseFDPAction.triggered.connect(self.initialise_FDP)
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
         self.reportAction.triggered.connect(self.export_report)
+        self.addPDFAction.triggered.connect(self.add_pdf)
+
 
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
@@ -161,6 +171,7 @@ class UnderMap:
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
         self.toolbar.addAction(self.reportAction)
+        self.toolbar.addAction(self.addPDFAction)
 
 
     def unload(self):
@@ -181,6 +192,9 @@ class UnderMap:
 
     def add_operator(self):
         self.addop.exec_()
+
+    def add_pdf(self):
+        self.addpdf.exec_()
 
     def initialise_PDF(self):
         project_path = get_project_path()

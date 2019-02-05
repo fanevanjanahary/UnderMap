@@ -193,7 +193,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
     worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
     ecart_cell = 0
-    nbr_pdf_to_treat = count_pdf_file(operator_name)[0]
+
     while ecart_cell < 3:
         for i, item in enumerate(ECART):
             worksheet.write(row, 4 + i + ecart_cell, item, header_format)

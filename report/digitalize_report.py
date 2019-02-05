@@ -201,53 +201,56 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 
     operator_path = join(path, RSX_SUB_GROUP[0], operator_name)
     tif_path = join(operator_path, RSX_SUB_GROUP[1])
-    points = []
-    for item in listdir(tif_path):
-        points.append(item)
+    tif_el = get_elements_name(tif_path, False, '.tif')
+    list_tif_replaced = [x.replace("_modified.tif", ".pdf") for x in tif_el]
+    points = get_elements_name(tif_path, False, '.points')
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
     pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
     try:
-        list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
+        pdf_el = get_elements_name(pdf_path_to_treat, False, '.pdf')
     except FileNotFoundError:
         rename(join(pdf_root, 'A-TRAITER'), pdf_path_to_treat)
-        list_pdf = (pdf_file for pdf_file in listdir(pdf_path_to_treat) if pdf_file.endswith(".pdf"))
+        pdf_el = get_elements_name(pdf_path_to_treat, False, '.pdf')
         if exists(join(pdf_root, 'UTILE')):
             rename(join(pdf_root, 'UTILE'), join(pdf_root, PDF_SUB_DIR[1]))
         if exists(join(pdf_root, 'IGNORE')):
             rmdir(join(pdf_root, 'IGNORE'))
 
-    for i_pdf_to_treat, item_pdf_to_treat in enumerate(list_pdf):
-        gcp_file_name = item_pdf_to_treat.replace('.pdf', '_modified.tif.points')
-        pdf_modified = item_pdf_to_treat.replace('.pdf', '_modified.tif')
+    print(points)
+    pdf_in_tif = [item for item in pdf_el if item in list_tif_replaced]
+    pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
+    for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
+        gcp_file_name = item_pdf_treated.replace('.pdf', '_modified.tif.points')
         if gcp_file_name in points:
-            worksheet.write(row + 1 + i_pdf_to_treat, 0, item_pdf_to_treat)
+            worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
             if len(list_of_residual) > 0 :
-                worksheet.write(row + 1 + i_pdf_to_treat, 1, count_csv_line(gcp_file) - 1)
-                worksheet.write(row + 1 + i_pdf_to_treat, 4, round(
-                    sum(list_of_residual)/(len(list_of_residual)+ 1), 2))
-                worksheet.write(row + 1 + i_pdf_to_treat, 5, round(max(list_of_residual), 2))
-                worksheet.merge_range('C{}:D{}'.format(row + 2 + nbr_pdf_to_treat, row + 2 + nbr_pdf_to_treat),
+                worksheet.write(row + 1 + i_pdf_treated, 1, count_csv_line(gcp_file) - 1)
+                worksheet.write(row + 1 + i_pdf_treated, 4, round(
+                    sum(list_of_residual)/len(list_of_residual), 2))
+                worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
+                worksheet.merge_range('C{}:D{}'.format(row + 2 + len(pdf_in_tif), row + 2 + len(pdf_in_tif)),
                                       'Moyenne', header_format)
                 for i_cell_mean, cell_mean in enumerate(['E','F']):
-                    worksheet.write_formula(row + 1+ nbr_pdf_to_treat, 4+ i_cell_mean,
+                    worksheet.write_formula(row + 1+ len(pdf_in_tif), 4+ i_cell_mean,
                                             '=AVERAGE({}{}:{}{})'.format(cell_mean, row + 2
+
                                                                          , cell_mean,
-                                                                         row+ 1+ nbr_pdf_to_treat),
+                                                                         row+ 1+ len(pdf_in_tif)),
                                             )
             else:
                 return
-
         else:
            return
-
+    for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
+          worksheet.write(row + 1 + i_pdf_not_treated, 12, item_pdf_not_treated)
 
 def export_report_file(workbook, path):
 
     operators_path = join(path, RSX_SUB_GROUP[0])
     operators_content = get_elements_name(operators_path, True, None)
-    print(operators_content)
+
     cell_header = workbook.add_format({
         'bold': 1,
         'border': 1,

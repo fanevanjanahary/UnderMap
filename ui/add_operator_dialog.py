@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ajouter opérateur dialog."""
+"""Ajouter exploitant dialog."""
 
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QDialogButtonBox
 from qgis.gui import QgsFileWidget
@@ -23,14 +23,12 @@ class AjouterOperateurDialog(QDialog, FORM_CLASS):
         self.parent = parent
         self.iface = iface
         self.setupUi(self)
-        self.select_pdf_action.setDialogTitle("Selectionner les pdf")
+        self.select_pdf_action.setDialogTitle("Selectionner le(s) pdf")
         self.select_pdf_action.setFilter("*.pdf")
         self.select_pdf_action.setStorageMode(storageMode=QgsFileWidget.GetMultipleFiles)
 
         self.operator_name.textChanged.connect(self.check_form_validation)
         self.select_pdf_action.fileChanged.connect(self.check_form_validation)
-
-        # buttonOperator.accepted.connect(QMessageBox.warning(None,"Avertisment","Veulliez ouvrir un projet qgis"))
 
         # Set up things for ok button
         self.save_button = self.button_add_operator.button(QDialogButtonBox.Save)

@@ -101,14 +101,14 @@ def get_elements_name(path, type, ext):
     :rtype: list
     """
     if type is False and ext is not None:
-        list_elements_name = (item for item in os.listdir(path) if isfile(join(path, item)) and item.endswith(ext))
-        return list(list_elements_name)
+        list_elements_name = [item for item in os.listdir(path) if isfile(join(path, item)) and item.endswith(ext)]
+        return list_elements_name
     if type is True:
-        list_elements_name = (item for item in os.listdir(path) if isdir(join(path, item)))
-        return list(list_elements_name)
+        list_elements_name = [item for item in os.listdir(path) if isdir(join(path, item))]
+        return list_elements_name
     else:
-        list_elements_name = (item for item in os.listdir(path) if isfile(join(path, item)))
-        return list(list_elements_name)
+        list_elements_name = [item for item in os.listdir(path) if isfile(join(path, item))]
+        return list_elements_name
 
 
 def get_group():
@@ -224,5 +224,5 @@ def residual_list(gcp_file):
                 residual.append(row[7])
             else:
                 return residual
-    return list(map(float, residual[1:-1]))
+    return list(map(float, residual[1:]))
 

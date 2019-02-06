@@ -14,7 +14,6 @@ from qgis.core import (
 
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
-    RSX_SUB_GROUP,
     QML_PATH,
     get_project_path,
     groups_to_array,
@@ -77,12 +76,12 @@ def create_group():
     """
     qgis_groups = get_group()
 
-    for g_item in PROJECT_GROUP:
+    for g_item in PROJECT_GROUP[:2]:
         if g_item not in groups_to_array(qgis_groups):
             qgis_groups.addGroup(g_item)
-    rsx_group = qgis_groups.findGroup("Reseau")
+    rsx_group = qgis_groups.findGroup(PROJECT_GROUP[0])
     if rsx_group is not None:
-        for item in RSX_SUB_GROUP:
+        for item in PROJECT_GROUP[2:]:
             if qgis_groups.findGroup(item) is None:
                 rsx_group.addGroup(item)
 

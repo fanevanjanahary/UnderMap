@@ -5,6 +5,7 @@ from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QDialogButtonBox
 from qgis.gui import QgsFileWidget
 from qgis.core import QgsMessageLog, Qgis
 from UnderMap.utilities.resources import get_ui_class
+#from UnderMap.utilities.utilities import copy_file
 
 
 FORM_CLASS = get_ui_class('add_pdf_dialog_base.ui')
@@ -48,4 +49,8 @@ class DialogAddPDF(QDialog, FORM_CLASS):
 
     def accept(self):
         print("working")
+        paths = self.select_pdf_action.filePath()
+        file_operator = QgsFileWidget.splitFilePaths(paths)
+        QgsMessageLog.logMessage('UnderMap', "Ajouter un opérateur: {} avec PDF: {}".format("lalla", ','.join(file_operator)), Qgis.Info)
+        #copy_file(name_operator, file_operator)
         self.close()

@@ -100,6 +100,8 @@ class UnderMap:
         self.addPDFAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
+        # For enable/disable the addpdf editor icon
+        self.iface.currentLayerChanged.connect(self.layer_changed)
 
     @staticmethod
     def tr(message):
@@ -149,7 +151,6 @@ class UnderMap:
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
             'Ajouter pdf',
             self.iface.mainWindow())
-        self.addPDFAction.setEnabled(False)
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -177,6 +178,21 @@ class UnderMap:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         self.iface.mainWindow().removeToolBar(self.toolbar)
+        self.iface.currentLayerChanged.disconnect(self.layer_changed)
+
+    def layer_changed(self, layer):
+
+        if not layer:
+            enable_addpdf = False
+        elif not hasattr(layer, 'providerType'):
+            enable_addpdf = False
+        elif layer.providerType() == 'wms':
+            enable_addpdf = False
+        elif not layer.geometryType() == 1:
+            enable_addpdf = False
+        else:
+            enable_addpdf = True
+        self.addPDFAction.setEnabled(enable_addpdf)
 
     def run(self):
         """Run method that performs all the real work"""

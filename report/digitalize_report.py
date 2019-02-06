@@ -14,7 +14,7 @@ from UnderMap.utilities.utilities import (
     LOGO_PATH,
     WORKSHEETS,
     OPERATOR_SUB_DIR,
-    RSX_SUB_GROUP,
+    PROJECT_GROUP,
     PDF_SUB_DIR
 )
 
@@ -199,8 +199,8 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             worksheet.write(row, 4 + i + ecart_cell, item, header_format)
         ecart_cell += 2
 
-    operator_path = join(path, RSX_SUB_GROUP[0], operator_name)
-    tif_path = join(operator_path, RSX_SUB_GROUP[1])
+    operator_path = join(path, PROJECT_GROUP[2], operator_name)
+    tif_path = join(operator_path, PROJECT_GROUP[3])
     tif_el = get_elements_name(tif_path, False, '.tif')
     list_tif_replaced = [x.replace("_modified.tif", ".pdf") for x in tif_el]
     points = get_elements_name(tif_path, False, '.points')
@@ -248,7 +248,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
 
 def export_report_file(workbook, path):
 
-    operators_path = join(path, RSX_SUB_GROUP[0])
+    operators_path = join(path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
 
     cell_header = workbook.add_format({

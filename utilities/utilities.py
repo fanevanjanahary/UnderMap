@@ -5,8 +5,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, Qgs
 from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
-PROJECT_GROUP = ['Reseaux', 'Fond de plan']
-RSX_SUB_GROUP = ['RSX', 'TIF', 'BUF']
+PROJECT_GROUP = ['Reseaux', 'Fond de plan', 'RSX', 'TIF', 'BUF']
 OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
@@ -150,8 +149,12 @@ def split_pdf(pdf_file, to_dir):
         QgsMessageLog.logMessage("Découpage du PDF {}".format(pdf_file), 'UnderMap', Qgis.Info)
         pdf_in_file = open(pdf_file, 'rb')
         input_pdf = PdfFileReader(pdf_in_file, strict=False)
-        pages_no = input_pdf.numPages
-        del input_pdf
+        try:
+            pages_no = input_pdf.numPages
+        except AttributeError:
+                        QgsMessageBar.pushCritical('Undermap',
+                                                             "Y a une erreur lors de découpage"
+                                                            "du fichier:{}".format(pdf_file))
         if pages_no > 1:
             for i in range(pages_no):
                 input_pdf = PdfFileReader(pdf_in_file, strict=False)
@@ -161,7 +164,7 @@ def split_pdf(pdf_file, to_dir):
                     try:
                         output.write(outputStream)
                     except AttributeError:
-                        QgsMessageBar.messageBar().pushError('Undermap',
+                        QgsMessageBar.pushCritical('Undermap',
                                                              "Y a une erreur lors de découpage"
                                                              "du fichier:{}".format(pdf_file))
                 del input_pdf
@@ -180,7 +183,7 @@ def count_pdf_file(dir_name):
     :rtype: list
     """
     path = get_project_path()
-    operator_path = join(path, RSX_SUB_GROUP[0], dir_name)
+    operator_path = join(path, PROJECT_GROUP[2], dir_name)
     nbr_file = []
     pdf_path_opr = join(operator_path, OPERATOR_SUB_DIR[0])
     for item_dir_pdf in get_elements_name(pdf_path_opr, True, None):

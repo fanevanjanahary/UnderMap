@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from os import listdir, rename, rmdir
+from os import rename, rmdir
 from os.path import join, exists
 from qgis.core import QgsVectorLayer, QgsProject
 from UnderMap.gis.tools import length_feature
@@ -216,7 +216,6 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
         if exists(join(pdf_root, 'IGNORE')):
             rmdir(join(pdf_root, 'IGNORE'))
 
-    print(points)
     pdf_in_tif = [item for item in pdf_el if item in list_tif_replaced]
     pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
     for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):

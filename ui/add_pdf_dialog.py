@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 """Ajouter pdf dialog."""
 
+from os.path import join
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QDialogButtonBox
 from qgis.gui import QgsFileWidget
 from qgis.core import QgsMessageLog, Qgis
 from UnderMap.utilities.resources import get_ui_class
-#from UnderMap.utilities.utilities import copy_file
+from UnderMap.utilities.utilities import (
+        copy_file,
+        get_project_path,
+        PROJECT_GROUP,
+        OPERATOR_SUB_DIR
+    )
 
 
 FORM_CLASS = get_ui_class('add_pdf_dialog_base.ui')
 
 
 class DialogAddPDF(QDialog, FORM_CLASS):
-    def __init__(self, parent=None, iface=None):
+    def __init__(self, parent=None, iface= None):
         """Constructor."""
         super(DialogAddPDF, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -48,9 +54,15 @@ class DialogAddPDF(QDialog, FORM_CLASS):
             self.save_button.setEnabled(False)
 
     def accept(self):
-        print("working")
+
+        from qgis.utils import iface
+        name_exploitant = iface.activeLayer().name()
         paths = self.select_pdf_action.filePath()
         file_operator = QgsFileWidget.splitFilePaths(paths)
-        QgsMessageLog.logMessage('UnderMap', "Ajouter un opérateur: {} avec PDF: {}".format("lalla", ','.join(file_operator)), Qgis.Info)
-        #copy_file(name_operator, file_operator)
+        project_path = get_project_path()
+        to_dir = join(project_path, PROJECT_GROUP[2], name_exploitant, OPERATOR_SUB_DIR[0])
+        print(file_operator)
+        QgsMessageLog.logMessage('UnderMap', "Ajout pdf dans: {} avec PDF: {}"
+                                 .format(name_exploitant, ','.join(file_operator)), Qgis.Info)
+        copy_file(file_operator, to_dir, None)
         self.close()

@@ -14,7 +14,6 @@ from UnderMap.utilities.utilities import (
     copy_file,
     get_project_path,
     groups_to_array,
-    get_group,
     get_elements_name
     )
 from UnderMap.gis.tools import (
@@ -22,7 +21,8 @@ from UnderMap.gis.tools import (
     add_layer_in_group,
     create_group,
     create_layer,
-    categorized_layer
+    categorized_layer,
+    get_group
     )
 
 

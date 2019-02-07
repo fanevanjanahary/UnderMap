@@ -17,7 +17,6 @@ from UnderMap.utilities.utilities import (
     QML_PATH,
     get_project_path,
     groups_to_array,
-    get_group
     )
 from UnderMap.definition.fields import(
     operator_def,
@@ -164,4 +163,22 @@ def length_feature(layer, rsx, cls, abd):
     except AttributeError:
         return sum
 
+def get_group():
+    """  Retourne un groupe d'un projet QGIS
 
+    :return: Un groupe d'un projet QGIS
+    :rtype: QgsProject
+    """
+    root = QgsProject.instance().layerTreeRoot()
+    return root
+
+def get_layers_in_group(group_name):
+    """Retourne les couches dans un groupé donné
+    :param group_name: Le nom de groupe
+    :type group_name: str
+
+    :return: Liste des nom de couche
+    :rtype: List
+    """
+    group = get_group().findGroup(group_name)
+    return [child.name() for child in group.children()]

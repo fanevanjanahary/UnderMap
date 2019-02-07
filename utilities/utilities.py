@@ -1,7 +1,7 @@
 # coding=utf-8
 import os, shutil, typing, csv
 from os.path import isfile, dirname, join, isdir, basename
-from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, QgsMessageLog
+from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
@@ -39,8 +39,9 @@ def copy_file(from_dir, to_dir, file_type):
     pdf_treat = join(to_dir, PDF_SUB_DIR[0])
     if  isinstance(from_dir, typing.List):
         for item_path in from_dir:
-            if isfile(item_path.replace('"', '')):
-                shutil.copy(item_path.replace('"', ''), to_dir)
+            print(item_path)
+            if isfile(item_path):
+                shutil.copy(item_path, to_dir)
                 if item_path.endswith(".pdf"):
                     split_pdf(item_path, pdf_treat)
     elif isdir(from_dir):
@@ -108,16 +109,6 @@ def get_elements_name(path, type, ext):
     else:
         list_elements_name = [item for item in os.listdir(path) if isfile(join(path, item))]
         return list_elements_name
-
-
-def get_group():
-    """  Retourne un groupe d'un projet QGIS
-
-    :return: Un groupe d'un projet QGIS
-    :rtype: QgsProject
-    """
-    root = QgsProject.instance().layerTreeRoot()
-    return root
 
 
 def groups_to_array(children):

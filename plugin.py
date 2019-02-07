@@ -43,6 +43,7 @@ from UnderMap.process import (
     initialise_emprise,
     export_xlsx_report
     )
+from UnderMap.gis.tools import get_layers_in_group
 
 
 LOGGER = logging.getLogger('UnderMap')
@@ -182,7 +183,9 @@ class UnderMap:
 
     def layer_changed(self, layer):
 
-        if not layer:
+        if not hasattr(layer, 'name'):
+            enable_addpdf = False
+        elif layer.name() not in get_layers_in_group("RSX"):
             enable_addpdf = False
         elif not hasattr(layer, 'providerType'):
             enable_addpdf = False

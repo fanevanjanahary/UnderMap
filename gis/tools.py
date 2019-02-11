@@ -108,8 +108,11 @@ def create_layer(to_dir, layer_name):
         QgsWkbTypes.LineString,
         QgsProject.instance().crs()
     )
+
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), "ESRI Shapefile")
     layer_ret = QgsVectorLayer(layer_path+".shp", layer_name, "ogr")
+    if layer_ret.crs().authid() != QgsProject.instance().crs().authid():
+        layer_ret.setCrs(QgsProject.instance().crs())
     return layer_ret
 
 

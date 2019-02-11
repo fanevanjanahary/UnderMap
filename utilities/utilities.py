@@ -39,7 +39,6 @@ def copy_file(from_dir, to_dir, file_type):
     pdf_treat = join(to_dir, PDF_SUB_DIR[0])
     if  isinstance(from_dir, typing.List):
         for item_path in from_dir:
-            print(item_path)
             if isfile(item_path):
                 shutil.copy(item_path, to_dir)
                 if item_path.endswith(".pdf"):

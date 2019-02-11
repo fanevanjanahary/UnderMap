@@ -183,7 +183,7 @@ def get_position_operators(operators_path, operators_content):
     return positions
 
 
-def georeference_report(path, operator_name, row, worksheet, header_format):
+def georeference_report(path, operator_name, row, worksheet, header_format, workbook):
 
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
@@ -221,9 +221,17 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
     for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
         gcp_file_name = item_pdf_treated.replace('.pdf', '_modified.tif.points')
         if gcp_file_name in points:
-            worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
+            if count_csv_line(gcp_file) - 1 < 6:
+                print(item_pdf_treated)
+                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated,
+                                customize_cell_format(None, None, "red", workbook))
+                worksheet.write(row + 1 + len(pdf_not_in_tif), 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",
+                                customize_cell_format(None, None, "red", workbook))
+            else:
+                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
+
             if len(list_of_residual) > 0 :
                 worksheet.write(row + 1 + i_pdf_treated, 1, count_csv_line(gcp_file) - 1)
                 worksheet.write(row + 1 + i_pdf_treated, 4, round(
@@ -242,8 +250,10 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
                 return
         else:
            return
-    for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
-          worksheet.write(row + 1 + i_pdf_not_treated, 12, item_pdf_not_treated)
+    if len(pdf_not_in_tif) > 0:
+        worksheet.write(row + 1 , 12, "CERTAINS PDF N’ONT PAS ETE GEOREFERENCES ")
+        for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
+            worksheet.write(row + 1 + i_pdf_not_treated, 13, item_pdf_not_treated)
 
 def export_report_file(workbook, path):
 
@@ -306,7 +316,7 @@ def export_report_file(workbook, path):
                 worksheet_rsx.write_formula(8, 3,
                             '=${}%d+${}%d'.format('B', 'C')%(8 + 1, 8 + 1)
                 )
-                georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
+                georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header, workbook)
 
         if i_worksheet ==  1:
             create_content(worksheet, 'Synthèse par réseau', cell_header,

@@ -149,7 +149,7 @@ class UnderMap:
             self.iface.mainWindow())
 
         self.addPDFAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
             'Ajouter pdf',
             self.iface.mainWindow())
         # actions dialogs

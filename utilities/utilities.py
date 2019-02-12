@@ -82,9 +82,13 @@ def create_dir(dir_path, dir_name):
     :param dir_name: Le nom du dossier
     :type dir_name: str
     """
-    new_dir = join(dir_path, dir_name)
+    if dir_name is not None:
+        new_dir = join(dir_path, dir_name)
+    else:
+        new_dir = dir_path
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
+
 
 
 def get_elements_name(path, type, ext):
@@ -133,6 +137,7 @@ def split_pdf(pdf_file, to_dir):
     :param to_dir: le dossier pour sauvegarder les fichier àpres le découpage
     :type to_dir: str
     """
+    create_dir(to_dir, None)
     file_name = basename(pdf_file).split('.')[0]
     to_dir = join(to_dir, file_name)
     if pdf_file.endswith(".pdf"):

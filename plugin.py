@@ -35,7 +35,7 @@ from qgis.core import QgsSettings, QgsProject
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
-from .ui.add_pdf_dialog import DialogAddPDF
+from .ui.manage_pdf_dialog import DialogAddPDF, DialogSplitPDF
 from .utilities.utilities import get_project_path
 from UnderMap.process import (
     initialise_pdf,
@@ -82,6 +82,7 @@ class UnderMap:
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
         self.addpdf = DialogAddPDF()
+        self.splitpdf = DialogSplitPDF()
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -99,6 +100,7 @@ class UnderMap:
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
         self.addPDFAction = None
+        self.splitPDF = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -152,6 +154,12 @@ class UnderMap:
             QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
             'Ajouter pdf',
             self.iface.mainWindow())
+
+        self.splitPDF = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
+            'Découper un PDF',
+            self.iface.mainWindow())
+
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -159,6 +167,7 @@ class UnderMap:
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
         self.reportAction.triggered.connect(self.export_report)
         self.addPDFAction.triggered.connect(self.add_pdf)
+        self.splitPDF.triggered.connect(self.split_pdf)
 
 
         # add actions on menu
@@ -166,9 +175,10 @@ class UnderMap:
         self.init_button.menu().addAction(self.addOperatorAction)
         self.init_button.setDefaultAction(self.initialisePDFAction)
         # add separator
-        # self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
+        #self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
+        self.init_button.menu().addAction(self.splitPDF)
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
@@ -212,8 +222,14 @@ class UnderMap:
     def add_operator(self):
         self.addop.exec_()
 
+
     def add_pdf(self):
         self.addpdf.exec_()
+
+
+    def split_pdf(self):
+        self.splitpdf.exec_()
+
 
     def initialise_PDF(self):
         project_path = get_project_path()

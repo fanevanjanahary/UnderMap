@@ -218,6 +218,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
 
     pdf_in_tif = [item for item in pdf_el if item in list_tif_replaced]
     pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
+    last_row_alerte = len(pdf_not_in_tif)
     for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
         gcp_file_name = item_pdf_treated.replace('.pdf', '_modified.tif.points')
         if gcp_file_name in points:
@@ -227,8 +228,9 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
                 print(item_pdf_treated)
                 worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated,
                                 customize_cell_format(None, None, "red", workbook))
-                worksheet.write(row + 1 + len(pdf_not_in_tif), 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",
+                worksheet.write(row + 1 + last_row_alerte, 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",
                                 customize_cell_format(None, None, "red", workbook))
+                last_row_alerte +=1
             else:
                 worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
 
@@ -236,7 +238,11 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
                 worksheet.write(row + 1 + i_pdf_treated, 1, count_csv_line(gcp_file) - 1)
                 worksheet.write(row + 1 + i_pdf_treated, 4, round(
                     sum(list_of_residual)/len(list_of_residual), 2))
-                worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
+                if max(list_of_residual) > 1:
+                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2),
+                                    customize_cell_format(None, None, "red", workbook))
+                else:
+                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
                 worksheet.merge_range('C{}:D{}'.format(row + 2 + len(pdf_in_tif), row + 2 + len(pdf_in_tif)),
                                       'Moyenne', header_format)
                 for i_cell_mean, cell_mean in enumerate(['E','F']):

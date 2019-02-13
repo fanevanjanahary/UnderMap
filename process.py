@@ -59,7 +59,6 @@ def create_operator(name, pdf):
         os.makedirs(root)
     if not exists(join(root, name)):
         for item_operator_sub_dir in OPERATOR_SUB_DIR:
-            print(item_operator_sub_dir)
             os.makedirs(join(operator_dir, item_operator_sub_dir))
             if item_operator_sub_dir == 'SHP':
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)

@@ -78,7 +78,7 @@ class DialogSplitPDF(QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect-
         QDialog.__init__(self, parent)
-        self.setWindowTitle("Découpage PDF")
+        QDialog.setWindowTitle(self, "Découpage PDF")
         self.parent = parent
         self.iface = iface
         self.setupUi(self)

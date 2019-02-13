@@ -75,9 +75,9 @@ def create_group():
     """
     qgis_groups = get_group()
 
-    for g_item in PROJECT_GROUP[:2]:
+    for i, g_item in enumerate(reversed(PROJECT_GROUP[:2])):
         if g_item not in groups_to_array(qgis_groups):
-            qgis_groups.addGroup(g_item)
+            qgis_groups.insertGroup(i,g_item)
     rsx_group = qgis_groups.findGroup(PROJECT_GROUP[0])
     if rsx_group is not None:
         for item in PROJECT_GROUP[2:]:

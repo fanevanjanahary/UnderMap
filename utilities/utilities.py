@@ -6,7 +6,7 @@ from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
 PROJECT_GROUP = ['Reseaux', 'Fond de plan', 'RSX', 'TIF', 'BUF']
-OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF']
+OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF', 'POINTS CALAGE']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
 LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')

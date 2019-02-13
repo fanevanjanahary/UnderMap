@@ -193,10 +193,16 @@ class UnderMap:
 
     def layer_changed(self, layer):
 
+        try:
+            layers = get_layers_in_group("RSX")
+        except AttributeError:
+            return
         if not hasattr(layer, 'name'):
             enable_addpdf = False
-        elif layer.name() not in get_layers_in_group("RSX"):
+
+        elif layer.name() not in layers:
             enable_addpdf = False
+
         elif not hasattr(layer, 'providerType'):
             enable_addpdf = False
         elif layer.providerType() == 'wms':

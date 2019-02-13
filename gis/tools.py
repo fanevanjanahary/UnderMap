@@ -9,7 +9,8 @@ from qgis.core import (
     QgsWkbTypes, QgsMemoryProviderUtils,
     QgsSymbol, QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
-    QgsFeatureRequest
+    QgsFeatureRequest, QgsApplication,
+    QgsProcessingContext, QgsProcessingFeedback
     )
 
 from UnderMap.utilities.utilities import (
@@ -17,6 +18,7 @@ from UnderMap.utilities.utilities import (
     QML_PATH,
     get_project_path,
     groups_to_array,
+    get_elements_name
     )
 from UnderMap.definition.fields import(
     operator_def,
@@ -25,6 +27,7 @@ from UnderMap.definition.fields import(
     rsx_def,
     abandoned_def
     )
+import processing
 
 
 def create_field(definition):
@@ -185,3 +188,27 @@ def get_layers_in_group(group_name):
     """
     group = get_group().findGroup(group_name)
     return [child.name() for child in group.children()]
+
+def manage_buffer(path):
+
+    qgis_groups = get_group()
+    operators_path = join(path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "model:Génerer les buffers")
+    context = QgsProcessingContext()
+    feedback = QgsProcessingFeedback()
+    for item in operators_content:
+        params = {
+            'reseau':'{}/{}/SHP/{}.shp'.format(operators_path, item, item),
+            'qgis:deletecolumn_4:sortie':'{}/{}/SHP/{}_BUF.shp'.format(operators_path, item, item)
+        }
+        result = processing.run(alg, params, context = context, feedback=feedback)
+        buf = qgis_groups.findGroup('BUF')
+        if buf is not None:
+            add_layer_in_group(result['OUTPUT'], buf, 'buffer_style.qml')
+
+
+
+
+

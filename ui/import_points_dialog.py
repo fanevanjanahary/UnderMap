@@ -21,7 +21,7 @@ class DialogImportPoint(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         QDialog.__init__(self, parent)
         self.parent = parent
-        self.iface = iface_  
+        self.iface = iface
         self.setupUi(self)
         self.select_points_action.setDialogTitle("Selectionner le(s) csv")
         self.select_points_action.setFilter("*.csv")

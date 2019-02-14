@@ -36,6 +36,7 @@ from qgis.core import QgsSettings, QgsProject
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
 from .ui.manage_pdf_dialog import DialogAddPDF, DialogSplitPDF
+from .ui.import_points_dialog import DialogImportPoint
 from .utilities.utilities import get_project_path
 from UnderMap.process import (
     initialise_pdf,
@@ -43,7 +44,7 @@ from UnderMap.process import (
     initialise_emprise,
     export_xlsx_report
     )
-from UnderMap.gis.tools import get_layers_in_group
+from UnderMap.gis.tools import get_layers_in_group, manage_buffer
 
 
 LOGGER = logging.getLogger('UnderMap')
@@ -83,6 +84,7 @@ class UnderMap:
         self.addop = AjouterOperateurDialog()
         self.addpdf = DialogAddPDF()
         self.splitpdf = DialogSplitPDF()
+        self.importpoints = DialogImportPoint()
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -100,7 +102,9 @@ class UnderMap:
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
         self.addPDFAction = None
-        self.splitPDF = None
+        self.splitPDFAction = None
+        self.importPointsAction = None
+        self.manageBufferAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -155,9 +159,19 @@ class UnderMap:
             'Ajouter pdf',
             self.iface.mainWindow())
 
-        self.splitPDF = QAction(
+        self.splitPDFAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
             'Découper un PDF',
+            self.iface.mainWindow())
+
+        self.importPointsAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Importer le point de calage',
+            self.iface.mainWindow())
+
+        self.manageBufferAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Génerer les buffers',
             self.iface.mainWindow())
 
         # actions dialogs
@@ -167,7 +181,9 @@ class UnderMap:
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
         self.reportAction.triggered.connect(self.export_report)
         self.addPDFAction.triggered.connect(self.add_pdf)
-        self.splitPDF.triggered.connect(self.split_pdf)
+        self.splitPDFAction.triggered.connect(self.split_pdf)
+        self.importPointsAction.triggered.connect(self.import_points)
+        self.manageBufferAction.triggered.connect(self.manage_buffer)
 
 
         # add actions on menu
@@ -178,12 +194,14 @@ class UnderMap:
         #self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
-        self.init_button.menu().addAction(self.splitPDF)
+        self.init_button.menu().addAction(self.splitPDFAction)
+        self.init_button.menu().addAction(self.manageBufferAction)
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
         self.toolbar.addAction(self.reportAction)
         self.toolbar.addAction(self.addPDFAction)
+        self.toolbar.addAction(self.importPointsAction)
 
 
     def unload(self):
@@ -236,6 +254,15 @@ class UnderMap:
     def split_pdf(self):
         self.splitpdf.exec_()
 
+
+    def import_points(self):
+        self.importpoints.exec_()
+
+    def manage_buffer(self):
+        project_path = get_project_path()
+        manage_buffer(project_path)
+        self.iface.messageBar().pushInfo('Undermap', "La génération des buffers a bien reussi."
+                                                            )
 
     def initialise_PDF(self):
         project_path = get_project_path()

@@ -2,7 +2,7 @@
 
 """Otuils pour les couches vector"""
 
-from os.path import join
+from os.path import join, basename,dirname
 from qgis.core import (
     QgsProject, QgsVectorLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -10,7 +10,8 @@ from qgis.core import (
     QgsSymbol, QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
     QgsFeatureRequest, QgsApplication,
-    QgsProcessingContext, QgsProcessingFeedback
+    QgsProcessingContext, QgsProcessingFeedback,
+    QgsCoordinateReferenceSystem
     )
 
 from UnderMap.utilities.utilities import (
@@ -196,19 +197,43 @@ def manage_buffer(path):
     operators_content = get_elements_name(operators_path, True, None)
     alg = QgsApplication.processingRegistry().algorithmById(
                                      "model:Génerer les buffers")
-    context = QgsProcessingContext()
-    feedback = QgsProcessingFeedback()
+
     for item in operators_content:
         params = {
             'reseau':'{}/{}/SHP/{}.shp'.format(operators_path, item, item),
             'qgis:deletecolumn_4:sortie':'{}/{}/SHP/{}_BUF.shp'.format(operators_path, item, item)
         }
-        result = processing.run(alg, params, context = context, feedback=feedback)
+        result = processing.run(alg, params)
         buf = qgis_groups.findGroup('BUF')
+        layer_name = basename(result['qgis:deletecolumn_4:sortie']).replace(".shp", "")
+        buf_layer = QgsVectorLayer(result['qgis:deletecolumn_4:sortie'], layer_name, "ogr")
         if buf is not None:
-            add_layer_in_group(result['OUTPUT'], buf, 'buffer_style.qml')
+            add_layer_in_group(buf_layer, buf, 'buffer_style.qml')
 
 
+def import_points(files, crs):
 
+    qgis_groups = get_group()
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "model:ImportPoints")
+
+    for item in files:
+        layer_point = item.replace(".csv", ".shp")
+        params = {
+            'fichiertexte':item,
+            'systemedufichiertexte':QgsCoordinateReferenceSystem(crs),
+            'native:reprojectlayer_1:Points transformés':layer_point
+        }
+        result = processing.run(alg, params)
+    layer_name = basename(result['native:reprojectlayer_1:Points transformés']).replace(".shp", "")
+    point_layer = QgsVectorLayer(result['native:reprojectlayer_1:Points transformés'], layer_name, "ogr")
+    points = qgis_groups.findGroup('POINTS CALAGE')
+    if points is not None:
+        add_layer_in_group(point_layer, points, "point_style.qml")
+    else:
+        rsx = qgis_groups.findGroup('Reseaux')
+        rsx.insertGroup(1, "POINTS CALAGE")
+        points = qgis_groups.findGroup('POINTS CALAGE')
+        add_layer_in_group(point_layer, points, "point_style.qml")
 
 

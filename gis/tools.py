@@ -2,7 +2,7 @@
 
 """Otuils pour les couches vector"""
 
-from os.path import join, basename,dirname
+from os.path import join, basename
 from qgis.core import (
     QgsProject, QgsVectorLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -236,4 +236,22 @@ def import_points(files, crs):
         points = qgis_groups.findGroup('POINTS CALAGE')
         add_layer_in_group(point_layer, points, "point_style.qml")
 
+def export_layer_as(layer, layer_format, ext, to_dir):
+    """Convertir un fichier sph en format donné
+    :param layer: la couche
+    :type layer: str
+
+    :param layer_format: le format final
+    :type layer_format: str
+
+    :param to_dir: le nouveau chemin
+    :type to_dir: str
+
+    """
+
+    layer_name = basename(layer).replace(".shp", "")
+    layer = QgsVectorLayer(layer, layer_name, "ogr")
+    layer_path = join(to_dir, layer_name+'{}'.format(ext))
+    print(layer_path)
+    QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
 

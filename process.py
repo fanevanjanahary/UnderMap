@@ -22,7 +22,8 @@ from UnderMap.gis.tools import (
     create_group,
     create_layer,
     categorized_layer,
-    get_group
+    get_group,
+    export_layer_as
     )
 
 
@@ -129,3 +130,13 @@ def export_xlsx_report(path):
     except PermissionError:
         return False
 
+def export_as_geojson(path):
+
+    rsx = join(path, 'RSX')
+    to_dir = join(path, 'GEOJSON')
+    create_dir(to_dir, None)
+    for root, dirs, files in os.walk(rsx):
+        for file in files:
+            if  root[-3:] == 'SHP' and file.endswith(".shp"):
+               layer = root + os.sep +file
+               export_layer_as(layer, "GeoJSON", ".geojson", to_dir)

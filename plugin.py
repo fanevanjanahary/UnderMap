@@ -168,7 +168,7 @@ class UnderMap:
 
         self.importPointsAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
-            'Importer le point de calage',
+            'Importer les points de calage',
             self.iface.mainWindow())
 
         self.manageBufferAction = QAction(

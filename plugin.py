@@ -42,7 +42,8 @@ from UnderMap.process import (
     initialise_pdf,
     initialise_fdp,
     initialise_emprise,
-    export_xlsx_report
+    export_xlsx_report,
+    export_as_geojson
     )
 from UnderMap.gis.tools import get_layers_in_group, manage_buffer
 
@@ -105,6 +106,7 @@ class UnderMap:
         self.splitPDFAction = None
         self.importPointsAction = None
         self.manageBufferAction = None
+        self.saveAsGeoJsonAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -174,6 +176,11 @@ class UnderMap:
             'Génerer les buffers',
             self.iface.mainWindow())
 
+        self.saveAsGeoJsonAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Exporter les GeoJSON',
+            self.iface.mainWindow())
+
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -184,6 +191,7 @@ class UnderMap:
         self.splitPDFAction.triggered.connect(self.split_pdf)
         self.importPointsAction.triggered.connect(self.import_points)
         self.manageBufferAction.triggered.connect(self.manage_buffer)
+        self.saveAsGeoJsonAction.triggered.connect(self.save_geojson)
 
 
         # add actions on menu
@@ -196,6 +204,7 @@ class UnderMap:
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
         self.init_button.menu().addAction(self.splitPDFAction)
         self.init_button.menu().addAction(self.manageBufferAction)
+        self.init_button.menu().addAction(self.saveAsGeoJsonAction)
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
@@ -322,3 +331,13 @@ class UnderMap:
                                                         .format(join(project_path, QgsProject.instance()
                                                         .baseName()+'.xlsx')))
 
+    def save_geojson(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
+            return
+        else:
+            if export_as_geojson(project_path):
+                 self.iface.messageBar().pushInfo('Undermap', "Les fichiers GeoJSON sont bien enregistrés dans {}".
+                                                  format(join(project_path, "GEOJSON"))
+                                                            )

@@ -255,5 +255,5 @@ def export_layer_as(layer, layer_format, ext, to_dir):
     layer_path = join(to_dir, layer_name+'{}'.format(ext))
     if exists(layer_path):
         os.remove(layer_path)
-        QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
+    QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
 

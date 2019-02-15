@@ -140,3 +140,4 @@ def export_as_geojson(path):
             if  root[-3:] == 'SHP' and file.endswith(".shp"):
                layer = root + os.sep +file
                export_layer_as(layer, "GeoJSON", ".geojson", to_dir)
+               return True

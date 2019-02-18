@@ -202,7 +202,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
     operator_path = join(path, PROJECT_GROUP[2], operator_name)
     tif_path = join(operator_path, PROJECT_GROUP[3])
     tif_el = get_elements_name(tif_path, False, '.tif')
-    list_tif_replaced = [x.replace("_modified.tif", ".pdf") for x in tif_el]
+    list_tif_replaced = [x.replace("_georef.tif", ".pdf") for x in tif_el]
     points = get_elements_name(tif_path, False, '.points')
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
     pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
@@ -220,7 +220,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
     pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
     last_row_alerte = len(pdf_not_in_tif)
     for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
-        gcp_file_name = item_pdf_treated.replace('.pdf', '_modified.tif.points')
+        gcp_file_name = item_pdf_treated.replace('.pdf', '_georef.tif.points')
         if gcp_file_name in points:
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)

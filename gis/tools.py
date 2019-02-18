@@ -257,3 +257,17 @@ def export_layer_as(layer, layer_format, ext, to_dir):
         os.remove(layer_path)
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
 
+def transparency_raster(percent):
+    """ Pour changer la transparence des rater dans sur qgis
+
+    :param percent: la valeur de pourcentage
+    :type percent: int
+
+    """
+    tif_children = get_layers_in_group('TIF')
+
+    for item in tif_children:
+        tif_child = get_group().findGroup(item)
+        for child in tif_child.children():
+            child.layer().renderer().setOpacity(percent)
+            child.layer().triggerRepaint()

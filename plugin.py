@@ -45,7 +45,11 @@ from UnderMap.process import (
     export_xlsx_report,
     export_as_geojson
     )
-from UnderMap.gis.tools import get_layers_in_group, manage_buffer
+from UnderMap.gis.tools import (
+    get_layers_in_group,
+    manage_buffer,
+    transparency_raster
+    )
 
 
 LOGGER = logging.getLogger('UnderMap')
@@ -107,6 +111,7 @@ class UnderMap:
         self.importPointsAction = None
         self.manageBufferAction = None
         self.saveAsGeoJsonAction = None
+        self.controlAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -181,6 +186,11 @@ class UnderMap:
             'Exporter les GeoJSON',
             self.iface.mainWindow())
 
+        self.controlAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Controller',
+            self.iface.mainWindow())
+
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -192,6 +202,7 @@ class UnderMap:
         self.importPointsAction.triggered.connect(self.import_points)
         self.manageBufferAction.triggered.connect(self.manage_buffer)
         self.saveAsGeoJsonAction.triggered.connect(self.save_geojson)
+        self.controlAction.triggered.connect(self.control)
 
 
         # add actions on menu
@@ -211,6 +222,7 @@ class UnderMap:
         self.toolbar.addAction(self.reportAction)
         self.toolbar.addAction(self.addPDFAction)
         self.toolbar.addAction(self.importPointsAction)
+        self.toolbar.addAction(self.controlAction)
 
 
     def unload(self):
@@ -272,6 +284,9 @@ class UnderMap:
         manage_buffer(project_path)
         self.iface.messageBar().pushInfo('Undermap', "La génération des buffers a bien reussi."
                                                             )
+    def control(self):
+        opacity = 0.5
+        transparency_raster(opacity)
 
     def initialise_PDF(self):
         project_path = get_project_path()

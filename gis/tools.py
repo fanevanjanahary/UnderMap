@@ -271,3 +271,12 @@ def transparency_raster(percent):
         for child in tif_child.children():
             child.layer().renderer().setOpacity(percent)
             child.layer().triggerRepaint()
+
+def zoom_to_selected(num_chant):
+    from qgis.utils import iface
+    layer = iface.activeLayer()
+    expr = '"num_chant" = \'{}\''.format(num_chant)
+    request = QgsFeatureRequest().setFilterExpression(expr)
+    features = layer.getFeatures(request)
+    for item in features:
+        layer.select(item.id())

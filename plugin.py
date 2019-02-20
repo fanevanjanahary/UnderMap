@@ -37,6 +37,7 @@ from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
 from .ui.manage_pdf_dialog import DialogAddPDF, DialogSplitPDF
 from .ui.import_points_dialog import DialogImportPoint
+from .ui.zoom_to_feature_dialog import DialogZoomToFeature
 from .utilities.utilities import get_project_path
 from UnderMap.process import (
     initialise_pdf,
@@ -90,6 +91,7 @@ class UnderMap:
         self.addpdf = DialogAddPDF()
         self.splitpdf = DialogSplitPDF()
         self.importpoints = DialogImportPoint()
+        self.zoomto = DialogZoomToFeature()
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -112,6 +114,7 @@ class UnderMap:
         self.manageBufferAction = None
         self.saveAsGeoJsonAction = None
         self.controlAction = None
+        self.zoomToAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -191,6 +194,11 @@ class UnderMap:
             'Controller',
             self.iface.mainWindow())
 
+        self.zoomToAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Zoom',
+            self.iface.mainWindow())
+
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -203,6 +211,7 @@ class UnderMap:
         self.manageBufferAction.triggered.connect(self.manage_buffer)
         self.saveAsGeoJsonAction.triggered.connect(self.save_geojson)
         self.controlAction.triggered.connect(self.control)
+        self.zoomToAction.triggered.connect(self.zoom_to_feature)
 
 
         # add actions on menu
@@ -223,6 +232,7 @@ class UnderMap:
         self.toolbar.addAction(self.addPDFAction)
         self.toolbar.addAction(self.importPointsAction)
         self.toolbar.addAction(self.controlAction)
+        self.toolbar.addAction(self.zoomToAction)
 
 
     def unload(self):
@@ -278,6 +288,10 @@ class UnderMap:
 
     def import_points(self):
         self.importpoints.exec_()
+
+
+    def zoom_to_feature(self):
+        self.zoomto.exec_()
 
     def manage_buffer(self):
         project_path = get_project_path()

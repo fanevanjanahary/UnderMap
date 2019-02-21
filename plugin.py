@@ -49,7 +49,8 @@ from UnderMap.process import (
 from UnderMap.gis.tools import (
     get_layers_in_group,
     manage_buffer,
-    transparency_raster
+    transparency_raster,
+    export_tfw
     )
 
 
@@ -115,6 +116,7 @@ class UnderMap:
         self.saveAsGeoJsonAction = None
         self.controlAction = None
         self.zoomToAction = None
+        self.exportTfwAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
@@ -189,6 +191,11 @@ class UnderMap:
             'Exporter les GeoJSON',
             self.iface.mainWindow())
 
+        self.exportTfwAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Exporter les Tfw',
+            self.iface.mainWindow())
+
         self.controlAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'icon.png')),
             'Controller',
@@ -212,6 +219,7 @@ class UnderMap:
         self.saveAsGeoJsonAction.triggered.connect(self.save_geojson)
         self.controlAction.triggered.connect(self.control)
         self.zoomToAction.triggered.connect(self.zoom_to_feature)
+        self.exportTfwAction.triggered.connect(self.export_tfw)
 
 
         # add actions on menu
@@ -225,6 +233,7 @@ class UnderMap:
         self.init_button.menu().addAction(self.splitPDFAction)
         self.init_button.menu().addAction(self.manageBufferAction)
         self.init_button.menu().addAction(self.saveAsGeoJsonAction)
+        self.init_button.menu().addAction(self.exportTfwAction)
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
@@ -369,4 +378,15 @@ class UnderMap:
             if export_as_geojson(project_path):
                  self.iface.messageBar().pushInfo('Undermap', "Les fichiers GeoJSON sont bien enregistrés dans {}".
                                                   format(join(project_path, "GEOJSON"))
+                                                            )
+
+    def export_tfw(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
+            return
+        else:
+            if export_tfw(project_path):
+                 self.iface.messageBar().pushInfo('Undermap', "Les fichiers twf sont bien enregistrés "
+
                                                             )

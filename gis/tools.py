@@ -18,6 +18,7 @@ from qgis.core import (
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     QML_PATH,
+    create_dir,
     get_project_path,
     groups_to_array,
     get_elements_name
@@ -256,6 +257,38 @@ def export_layer_as(layer, layer_format, ext, to_dir):
     if exists(layer_path):
         os.remove(layer_path)
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
+
+
+def export_tfw(path):
+
+    operators_path = join(path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "gdal:translate")
+
+    for item in operators_content:
+        tif_path = join(operators_path, item, 'TIF')
+        tif_el = get_elements_name(tif_path, False, '.tif')
+        for item_tif in tif_el:
+            tif_file = join(tif_path, item_tif)
+            tif_output = tif_file.replace('.tif', '.jpg')
+            wld_file = tif_output.replace('jpg', 'wld')
+            params = {
+                'INPUT': tif_file,
+                'TARGET_CRS':None,
+                'NODATA':None,
+                'COPY_SUBDATASETS':False,
+                'OPTIONS':'worldfile=yes',
+                'DATA_TYPE':0,
+                'OUTPUT':tif_output
+            }
+            result = processing.run(alg, params)
+            os.remove(tif_output)
+            os.rename(wld_file, wld_file.replace('wld', 'tfw'))
+        for item_xml in get_elements_name(tif_path, False, 'xml'):
+            os.remove(join(tif_path, item_xml))
+
+
 
 def transparency_raster(percent):
     """ Pour changer la transparence des rater dans sur qgis

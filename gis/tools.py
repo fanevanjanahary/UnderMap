@@ -290,7 +290,7 @@ def export_tfw(path):
 
 
 
-def transparency_raster(percent):
+def transparency_raster():
     """ Pour changer la transparence des rater dans sur qgis
 
     :param percent: la valeur de pourcentage
@@ -298,12 +298,17 @@ def transparency_raster(percent):
 
     """
     tif_children = get_layers_in_group('TIF')
-
+    percent = None
     for item in tif_children:
         tif_child = get_group().findGroup(item)
         for child in tif_child.children():
+            if child.layer().renderer().opacity() <= 0.5:
+                percent = 1
+            elif child.layer().renderer().opacity() >= 1:
+                percent = 0.5
             child.layer().renderer().setOpacity(percent)
             child.layer().triggerRepaint()
+
 
 def zoom_to_selected(num_chant):
     from qgis.utils import iface

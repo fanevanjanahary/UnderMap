@@ -308,8 +308,8 @@ class UnderMap:
         self.iface.messageBar().pushInfo('Undermap', "La génération des buffers a bien reussi."
                                                             )
     def control(self):
-        opacity = 0.5
-        transparency_raster(opacity)
+
+        transparency_raster()
 
     def initialise_PDF(self):
         project_path = get_project_path()

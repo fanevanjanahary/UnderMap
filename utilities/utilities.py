@@ -1,13 +1,12 @@
 # coding=utf-8
 import os, shutil, typing, csv
 from os.path import isfile, dirname, join, isdir, basename
-from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter, Qgis, QgsMessageLog
+from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
 
-PROJECT_GROUP = ['Reseaux', 'Fond de plan']
-RSX_SUB_GROUP = ['RSX', 'TIF', 'BUF']
-OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF']
+PROJECT_GROUP = ['Reseaux', 'Fond de plan', 'RSX', 'TIF', 'BUF']
+OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF', 'POINTS CALAGE']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
 LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')
@@ -40,8 +39,8 @@ def copy_file(from_dir, to_dir, file_type):
     pdf_treat = join(to_dir, PDF_SUB_DIR[0])
     if  isinstance(from_dir, typing.List):
         for item_path in from_dir:
-            if isfile(item_path.replace('"', '')):
-                shutil.copy(item_path.replace('"', ''), to_dir)
+            if isfile(item_path):
+                shutil.copy(item_path, to_dir)
                 if item_path.endswith(".pdf"):
                     split_pdf(item_path, pdf_treat)
     elif isdir(from_dir):
@@ -83,9 +82,13 @@ def create_dir(dir_path, dir_name):
     :param dir_name: Le nom du dossier
     :type dir_name: str
     """
-    new_dir = join(dir_path, dir_name)
+    if dir_name is not None:
+        new_dir = join(dir_path, dir_name)
+    else:
+        new_dir = dir_path
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
+
 
 
 def get_elements_name(path, type, ext):
@@ -111,16 +114,6 @@ def get_elements_name(path, type, ext):
         return list_elements_name
 
 
-def get_group():
-    """  Retourne un groupe d'un projet QGIS
-
-    :return: Un groupe d'un projet QGIS
-    :rtype: QgsProject
-    """
-    root = QgsProject.instance().layerTreeRoot()
-    return root
-
-
 def groups_to_array(children):
     """ Convertition de ListGroupe en liste array
 
@@ -144,14 +137,19 @@ def split_pdf(pdf_file, to_dir):
     :param to_dir: le dossier pour sauvegarder les fichier àpres le découpage
     :type to_dir: str
     """
+    create_dir(to_dir, None)
     file_name = basename(pdf_file).split('.')[0]
     to_dir = join(to_dir, file_name)
     if pdf_file.endswith(".pdf"):
         QgsMessageLog.logMessage("Découpage du PDF {}".format(pdf_file), 'UnderMap', Qgis.Info)
         pdf_in_file = open(pdf_file, 'rb')
         input_pdf = PdfFileReader(pdf_in_file, strict=False)
-        pages_no = input_pdf.numPages
-        del input_pdf
+        try:
+            pages_no = input_pdf.numPages
+        except AttributeError:
+                        QgsMessageBar.pushCritical('Undermap',
+                                                             "Y a une erreur lors de découpage"
+                                                            "du fichier:{}".format(pdf_file))
         if pages_no > 1:
             for i in range(pages_no):
                 input_pdf = PdfFileReader(pdf_in_file, strict=False)
@@ -161,7 +159,7 @@ def split_pdf(pdf_file, to_dir):
                     try:
                         output.write(outputStream)
                     except AttributeError:
-                        QgsMessageBar.messageBar().pushError('Undermap',
+                        QgsMessageBar.pushCritical('Undermap',
                                                              "Y a une erreur lors de découpage"
                                                              "du fichier:{}".format(pdf_file))
                 del input_pdf
@@ -180,7 +178,7 @@ def count_pdf_file(dir_name):
     :rtype: list
     """
     path = get_project_path()
-    operator_path = join(path, RSX_SUB_GROUP[0], dir_name)
+    operator_path = join(path, PROJECT_GROUP[2], dir_name)
     nbr_file = []
     pdf_path_opr = join(operator_path, OPERATOR_SUB_DIR[0])
     for item_dir_pdf in get_elements_name(pdf_path_opr, True, None):

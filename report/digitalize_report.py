@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from os import listdir, rename, rmdir
+from os import rename, rmdir
 from os.path import join, exists
 from qgis.core import QgsVectorLayer, QgsProject
 from UnderMap.gis.tools import length_feature
@@ -14,7 +14,7 @@ from UnderMap.utilities.utilities import (
     LOGO_PATH,
     WORKSHEETS,
     OPERATOR_SUB_DIR,
-    RSX_SUB_GROUP,
+    PROJECT_GROUP,
     PDF_SUB_DIR
 )
 
@@ -183,7 +183,7 @@ def get_position_operators(operators_path, operators_content):
     return positions
 
 
-def georeference_report(path, operator_name, row, worksheet, header_format):
+def georeference_report(path, operator_name, row, worksheet, header_format, workbook):
 
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
@@ -199,10 +199,10 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
             worksheet.write(row, 4 + i + ecart_cell, item, header_format)
         ecart_cell += 2
 
-    operator_path = join(path, RSX_SUB_GROUP[0], operator_name)
-    tif_path = join(operator_path, RSX_SUB_GROUP[1])
+    operator_path = join(path, PROJECT_GROUP[2], operator_name)
+    tif_path = join(operator_path, PROJECT_GROUP[3])
     tif_el = get_elements_name(tif_path, False, '.tif')
-    list_tif_replaced = [x.replace("_modified.tif", ".pdf") for x in tif_el]
+    list_tif_replaced = [x.replace("_georef.tif", ".pdf") for x in tif_el]
     points = get_elements_name(tif_path, False, '.points')
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
     pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
@@ -216,20 +216,33 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
         if exists(join(pdf_root, 'IGNORE')):
             rmdir(join(pdf_root, 'IGNORE'))
 
-    print(points)
     pdf_in_tif = [item for item in pdf_el if item in list_tif_replaced]
     pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
+    last_row_alerte = len(pdf_not_in_tif)
     for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
-        gcp_file_name = item_pdf_treated.replace('.pdf', '_modified.tif.points')
+        gcp_file_name = item_pdf_treated.replace('.pdf', '_georef.tif.points')
         if gcp_file_name in points:
-            worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
+            if count_csv_line(gcp_file) - 1 < 6:
+                print(item_pdf_treated)
+                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated,
+                                customize_cell_format(None, None, "red", workbook))
+                worksheet.write(row + 1 + last_row_alerte, 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",
+                                customize_cell_format(None, None, "red", workbook))
+                last_row_alerte +=1
+            else:
+                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
+
             if len(list_of_residual) > 0 :
                 worksheet.write(row + 1 + i_pdf_treated, 1, count_csv_line(gcp_file) - 1)
                 worksheet.write(row + 1 + i_pdf_treated, 4, round(
                     sum(list_of_residual)/len(list_of_residual), 2))
-                worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
+                if max(list_of_residual) > 1:
+                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2),
+                                    customize_cell_format(None, None, "red", workbook))
+                else:
+                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
                 worksheet.merge_range('C{}:D{}'.format(row + 2 + len(pdf_in_tif), row + 2 + len(pdf_in_tif)),
                                       'Moyenne', header_format)
                 for i_cell_mean, cell_mean in enumerate(['E','F']):
@@ -243,12 +256,14 @@ def georeference_report(path, operator_name, row, worksheet, header_format):
                 return
         else:
            return
-    for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
-          worksheet.write(row + 1 + i_pdf_not_treated, 12, item_pdf_not_treated)
+    if len(pdf_not_in_tif) > 0:
+        worksheet.write(row + 1 , 12, "CERTAINS PDF N’ONT PAS ETE GEOREFERENCES ")
+        for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
+            worksheet.write(row + 1 + i_pdf_not_treated, 13, item_pdf_not_treated)
 
 def export_report_file(workbook, path):
 
-    operators_path = join(path, RSX_SUB_GROUP[0])
+    operators_path = join(path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
 
     cell_header = workbook.add_format({
@@ -307,7 +322,7 @@ def export_report_file(workbook, path):
                 worksheet_rsx.write_formula(8, 3,
                             '=${}%d+${}%d'.format('B', 'C')%(8 + 1, 8 + 1)
                 )
-                georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header)
+                georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header, workbook)
 
         if i_worksheet ==  1:
             create_content(worksheet, 'Synthèse par réseau', cell_header,

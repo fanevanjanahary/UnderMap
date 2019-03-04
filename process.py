@@ -7,14 +7,13 @@ from qgis.core import QgsProject, QgsVectorLayer
 from UnderMap.library_extras import xlsxwriter
 from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
+    PROJECT_GROUP,
     PDF_SUB_DIR,
     OPERATOR_SUB_DIR,
-    RSX_SUB_GROUP,
     create_dir,
     copy_file,
     get_project_path,
     groups_to_array,
-    get_group,
     get_elements_name
     )
 from UnderMap.gis.tools import (
@@ -22,7 +21,9 @@ from UnderMap.gis.tools import (
     add_layer_in_group,
     create_group,
     create_layer,
-    categorized_layer
+    categorized_layer,
+    get_group,
+    export_layer_as
     )
 
 
@@ -48,10 +49,10 @@ def create_operator(name, pdf):
     :param pdf: Le(s) fichier(s) pdf associé(s) à un opérateur
     :type pdf: str
     """
-    root = join(get_project_path(), RSX_SUB_GROUP[0])
+    root = join(get_project_path(), PROJECT_GROUP[2])
     operator_dir = join(root, name)
     qgis_groups = get_group()
-    tif_group = qgis_groups.findGroup("TIF")
+    tif_group = qgis_groups.findGroup(PROJECT_GROUP[3])
     if tif_group is not None:
         if qgis_groups.findGroup(name) is None:
             tif_group.addGroup(name)
@@ -62,7 +63,7 @@ def create_operator(name, pdf):
             os.makedirs(join(operator_dir, item_operator_sub_dir))
             if item_operator_sub_dir == 'SHP':
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)
-                add_layer_in_group(layer, qgis_groups.findGroup("RSX"), 'line_style.qml')
+                add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), 'line_style.qml')
             elif item_operator_sub_dir == 'PDF':
                 for item_sous_pdf in PDF_SUB_DIR:
                     sub_pdf = join(operator_dir, item_operator_sub_dir, item_sous_pdf)
@@ -80,8 +81,8 @@ def initialise_fdp(dxf_file):
     """
     create_dir(get_project_path(), 'FDP/SHP')
     copy_file(dxf_file[0], join(get_project_path(), 'FDP'), None)
-    if get_group().findGroup("Fond-Plan") is None :
-        get_group().addGroup("Fond-Plan")
+    if get_group().findGroup(PROJECT_GROUP[1]) is None :
+        get_group().addGroup(PROJECT_GROUP[1])
     shp_path = join(get_project_path(),'FDP/SHP',basename(dxf_file[0].replace('dxf', 'shp')))
     dxf_info = "|layername=entities|geometrytype=LineString"
     layer_name = basename(dxf_file[0]).split('.')[0]
@@ -89,7 +90,7 @@ def initialise_fdp(dxf_file):
     if save_as_shp(dxf_vl, shp_path, dxf_vl.crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         layer.setCrs(QgsProject.instance().crs())
-        add_layer_in_group(layer, get_group().findGroup("Fond-Plan"),None)
+        add_layer_in_group(layer, get_group().findGroup(PROJECT_GROUP[1]),None)
         categorized_layer(layer, 'Layer')
 
 
@@ -102,14 +103,14 @@ def initialise_emprise(kml_file):
     qgis_groups = get_group()
     create_dir(get_project_path(), 'FDP/SHP')
     copy_file(kml_file[0], join(get_project_path(), 'FDP'), None)
-    if qgis_groups.findGroup("Fond-Plan") is None:
-        qgis_groups.addGroup("Fond-Plan")
+    if qgis_groups.findGroup(PROJECT_GROUP[1]) is None:
+        qgis_groups.addGroup(PROJECT_GROUP[1])
     shp_path = join(get_project_path(), 'FDP/SHP', basename(kml_file[0].replace('kml', 'shp')))
     layer_name = basename(kml_file[0]).split('.')[0]
     dxf_vl = QgsVectorLayer(kml_file[0], layer_name, "ogr")
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
-        add_layer_in_group(layer, qgis_groups.findGroup("Fond-Plan"), 'emprise_style.qml')
+        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[1]), 'emprise_style.qml')
 
 
 def export_xlsx_report(path):
@@ -129,3 +130,15 @@ def export_xlsx_report(path):
     except PermissionError:
         return False
 
+def export_as_geojson(path):
+
+    rsx_path = join(path, 'RSX')
+
+    for root, dirs, files in os.walk(rsx_path):
+        for file in files:
+            if  root[-3:] == 'SHP' and file.endswith(".shp"):
+                to_dir = join(root[0:-3], 'GEOJSON')
+                create_dir(to_dir, None)
+                layer = root + os.sep +file
+                export_layer_as(layer, "GeoJSON", ".geojson", to_dir)
+    return True

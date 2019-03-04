@@ -2,23 +2,26 @@
 
 """Otuils pour les couches vector"""
 
-from os.path import join
+import os
+from os.path import join, basename, exists
 from qgis.core import (
     QgsProject, QgsVectorLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
     QgsWkbTypes, QgsMemoryProviderUtils,
     QgsSymbol, QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
-    QgsFeatureRequest
+    QgsFeatureRequest, QgsApplication,
+    QgsProcessingContext, QgsProcessingFeedback,
+    QgsCoordinateReferenceSystem
     )
 
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
-    RSX_SUB_GROUP,
     QML_PATH,
+    create_dir,
     get_project_path,
     groups_to_array,
-    get_group
+    get_elements_name
     )
 from UnderMap.definition.fields import(
     operator_def,
@@ -27,6 +30,7 @@ from UnderMap.definition.fields import(
     rsx_def,
     abandoned_def
     )
+import processing
 
 
 def create_field(definition):
@@ -77,12 +81,12 @@ def create_group():
     """
     qgis_groups = get_group()
 
-    for g_item in PROJECT_GROUP:
+    for i, g_item in enumerate(reversed(PROJECT_GROUP[:2])):
         if g_item not in groups_to_array(qgis_groups):
-            qgis_groups.addGroup(g_item)
-    rsx_group = qgis_groups.findGroup("Reseau")
+            qgis_groups.insertGroup(i,g_item)
+    rsx_group = qgis_groups.findGroup(PROJECT_GROUP[0])
     if rsx_group is not None:
-        for item in RSX_SUB_GROUP:
+        for item in PROJECT_GROUP[2:]:
             if qgis_groups.findGroup(item) is None:
                 rsx_group.addGroup(item)
 
@@ -110,8 +114,11 @@ def create_layer(to_dir, layer_name):
         QgsWkbTypes.LineString,
         QgsProject.instance().crs()
     )
+
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), "ESRI Shapefile")
     layer_ret = QgsVectorLayer(layer_path+".shp", layer_name, "ogr")
+    if layer_ret.crs().authid() != QgsProject.instance().crs().authid():
+        layer_ret.setCrs(QgsProject.instance().crs())
     return layer_ret
 
 
@@ -165,4 +172,149 @@ def length_feature(layer, rsx, cls, abd):
     except AttributeError:
         return sum
 
+def get_group():
+    """  Retourne un groupe d'un projet QGIS
 
+    :return: Un groupe d'un projet QGIS
+    :rtype: QgsProject
+    """
+    root = QgsProject.instance().layerTreeRoot()
+    return root
+
+def get_layers_in_group(group_name):
+    """Retourne les couches dans un groupé donné
+    :param group_name: Le nom de groupe
+    :type group_name: str
+
+    :return: Liste des nom de couche
+    :rtype: List
+    """
+    group = get_group().findGroup(group_name)
+    return [child.name() for child in group.children()]
+
+def manage_buffer(path):
+
+    qgis_groups = get_group()
+    operators_path = join(path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "model:Génerer les buffers")
+
+    for item in operators_content:
+        params = {
+            'reseau':'{}/{}/SHP/{}.shp'.format(operators_path, item, item),
+            'qgis:deletecolumn_4:sortie':'{}/{}/SHP/{}_BUF.shp'.format(operators_path, item, item)
+        }
+        result = processing.run(alg, params)
+        buf = qgis_groups.findGroup('BUF')
+        layer_name = basename(result['qgis:deletecolumn_4:sortie']).replace(".shp", "")
+        buf_layer = QgsVectorLayer(result['qgis:deletecolumn_4:sortie'], layer_name, "ogr")
+        if buf is not None:
+            add_layer_in_group(buf_layer, buf, 'buffer_style.qml')
+
+
+def import_points(files, crs):
+
+    qgis_groups = get_group()
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "model:ImportPoints")
+
+    for item in files:
+        layer_point = item.replace(".csv", ".shp")
+        params = {
+            'fichiertexte':item,
+            'systemedufichiertexte':QgsCoordinateReferenceSystem(crs),
+            'native:reprojectlayer_1:Points transformés':layer_point
+        }
+        result = processing.run(alg, params)
+    layer_name = basename(result['native:reprojectlayer_1:Points transformés']).replace(".shp", "")
+    point_layer = QgsVectorLayer(result['native:reprojectlayer_1:Points transformés'], layer_name, "ogr")
+    points = qgis_groups.findGroup('POINTS CALAGE')
+    if points is not None:
+        add_layer_in_group(point_layer, points, "point_style.qml")
+    else:
+        rsx = qgis_groups.findGroup('Reseaux')
+        rsx.insertGroup(1, "POINTS CALAGE")
+        points = qgis_groups.findGroup('POINTS CALAGE')
+        add_layer_in_group(point_layer, points, "point_style.qml")
+
+def export_layer_as(layer, layer_format, ext, to_dir):
+    """Convertir un fichier sph en format donné
+    :param layer: la couche
+    :type layer: str
+
+    :param layer_format: le format final
+    :type layer_format: str
+
+    :param to_dir: le nouveau chemin
+    :type to_dir: str
+
+    """
+
+    layer_name = basename(layer).replace(".shp", "")
+    layer = QgsVectorLayer(layer, layer_name, "ogr")
+    layer_path = join(to_dir, layer_name+'{}'.format(ext))
+    if exists(layer_path):
+        os.remove(layer_path)
+    QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
+
+
+def export_tfw(path):
+
+    operators_path = join(path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    alg = QgsApplication.processingRegistry().algorithmById(
+                                     "gdal:translate")
+
+    for item in operators_content:
+        tif_path = join(operators_path, item, 'TIF')
+        tif_el = get_elements_name(tif_path, False, '.tif')
+        for item_tif in tif_el:
+            tif_file = join(tif_path, item_tif)
+            tif_output = tif_file.replace('.tif', '.jpg')
+            wld_file = tif_output.replace('jpg', 'wld')
+            params = {
+                'INPUT': tif_file,
+                'TARGET_CRS':None,
+                'NODATA':None,
+                'COPY_SUBDATASETS':False,
+                'OPTIONS':'worldfile=yes',
+                'DATA_TYPE':0,
+                'OUTPUT':tif_output
+            }
+            result = processing.run(alg, params)
+            os.remove(tif_output)
+            os.rename(wld_file, wld_file.replace('wld', 'tfw'))
+        for item_xml in get_elements_name(tif_path, False, 'xml'):
+            os.remove(join(tif_path, item_xml))
+
+
+
+def transparency_raster():
+    """ Pour changer la transparence des rater dans sur qgis
+
+    :param percent: la valeur de pourcentage
+    :type percent: int
+
+    """
+    tif_children = get_layers_in_group('TIF')
+    percent = None
+    for item in tif_children:
+        tif_child = get_group().findGroup(item)
+        for child in tif_child.children():
+            if child.layer().renderer().opacity() <= 0.5:
+                percent = 1
+            elif child.layer().renderer().opacity() >= 1:
+                percent = 0.5
+            child.layer().renderer().setOpacity(percent)
+            child.layer().triggerRepaint()
+
+
+def zoom_to_selected(num_chant):
+    from qgis.utils import iface
+    layer = iface.activeLayer()
+    expr = '"num_chant" = \'{}\''.format(num_chant)
+    request = QgsFeatureRequest().setFilterExpression(expr)
+    features = layer.getFeatures(request)
+    for item in features:
+        layer.select(item.id())

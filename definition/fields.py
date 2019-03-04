@@ -7,7 +7,7 @@ from qgis.PyQt.QtCore import QVariant
 
 
 operator_def = {
-    'name': 'Operateur',
+    'name': 'Exploitant',
     'type': QVariant.String,
     'length': 50,
     'precision': 0

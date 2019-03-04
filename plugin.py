@@ -35,13 +35,22 @@ from qgis.core import QgsSettings, QgsProject
 # Import the code for the dialog
 from .ui.undermap_dialog import UnderMapDialog
 from .ui.add_operator_dialog import AjouterOperateurDialog
-from .ui.add_pdf_dialog import DialogAddPDF
+from .ui.manage_pdf_dialog import DialogAddPDF, DialogSplitPDF
+from .ui.import_points_dialog import DialogImportPoint
+from .ui.zoom_to_feature_dialog import DialogZoomToFeature
 from .utilities.utilities import get_project_path
 from UnderMap.process import (
     initialise_pdf,
     initialise_fdp,
     initialise_emprise,
-    export_xlsx_report
+    export_xlsx_report,
+    export_as_geojson
+    )
+from UnderMap.gis.tools import (
+    get_layers_in_group,
+    manage_buffer,
+    transparency_raster,
+    export_tfw
     )
 
 
@@ -81,6 +90,9 @@ class UnderMap:
         self.dlg = UnderMapDialog()
         self.addop = AjouterOperateurDialog()
         self.addpdf = DialogAddPDF()
+        self.splitpdf = DialogSplitPDF()
+        self.importpoints = DialogImportPoint()
+        self.zoomto = DialogZoomToFeature()
 
         # Initialise buttton
         self.init_button = QToolButton()
@@ -98,8 +110,17 @@ class UnderMap:
         self.initialiseFDPAction = None
         self.initialiseEmpriseAction = None
         self.addPDFAction = None
+        self.splitPDFAction = None
+        self.importPointsAction = None
+        self.manageBufferAction = None
+        self.saveAsGeoJsonAction = None
+        self.controlAction = None
+        self.zoomToAction = None
+        self.exportTfwAction = None
 
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
+        # For enable/disable the addpdf editor icon
+        self.iface.currentLayerChanged.connect(self.layer_changed)
 
     @staticmethod
     def tr(message):
@@ -146,10 +167,45 @@ class UnderMap:
             self.iface.mainWindow())
 
         self.addPDFAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
             'Ajouter pdf',
             self.iface.mainWindow())
-        self.addPDFAction.setEnabled(False)
+
+        self.splitPDFAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'add_pdf.png')),
+            'Découper un PDF',
+            self.iface.mainWindow())
+
+        self.importPointsAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Importer les points de calage',
+            self.iface.mainWindow())
+
+        self.manageBufferAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Génerer les buffers',
+            self.iface.mainWindow())
+
+        self.saveAsGeoJsonAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Exporter les GeoJSON',
+            self.iface.mainWindow())
+
+        self.exportTfwAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Exporter les Tfw',
+            self.iface.mainWindow())
+
+        self.controlAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Controller',
+            self.iface.mainWindow())
+
+        self.zoomToAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            'Zoom',
+            self.iface.mainWindow())
+
         # actions dialogs
         self.initialisePDFAction.triggered.connect(self.initialise_PDF)
         self.addOperatorAction.triggered.connect(self.add_operator)
@@ -157,6 +213,13 @@ class UnderMap:
         self.initialiseEmpriseAction.triggered.connect(self.initialise_emprise)
         self.reportAction.triggered.connect(self.export_report)
         self.addPDFAction.triggered.connect(self.add_pdf)
+        self.splitPDFAction.triggered.connect(self.split_pdf)
+        self.importPointsAction.triggered.connect(self.import_points)
+        self.manageBufferAction.triggered.connect(self.manage_buffer)
+        self.saveAsGeoJsonAction.triggered.connect(self.save_geojson)
+        self.controlAction.triggered.connect(self.control)
+        self.zoomToAction.triggered.connect(self.zoom_to_feature)
+        self.exportTfwAction.triggered.connect(self.export_tfw)
 
 
         # add actions on menu
@@ -164,19 +227,49 @@ class UnderMap:
         self.init_button.menu().addAction(self.addOperatorAction)
         self.init_button.setDefaultAction(self.initialisePDFAction)
         # add separator
-        # self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
+        #self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
+        self.init_button.menu().addAction(self.splitPDFAction)
+        self.init_button.menu().addAction(self.manageBufferAction)
+        self.init_button.menu().addAction(self.saveAsGeoJsonAction)
+        self.init_button.menu().addAction(self.exportTfwAction)
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
         self.toolbar.addAction(self.reportAction)
         self.toolbar.addAction(self.addPDFAction)
+        self.toolbar.addAction(self.importPointsAction)
+        self.toolbar.addAction(self.controlAction)
+        self.toolbar.addAction(self.zoomToAction)
 
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         self.iface.mainWindow().removeToolBar(self.toolbar)
+        self.iface.currentLayerChanged.disconnect(self.layer_changed)
+
+    def layer_changed(self, layer):
+
+        try:
+            layers = get_layers_in_group("RSX")
+        except AttributeError:
+            return
+        if not hasattr(layer, 'name'):
+            enable_addpdf = False
+
+        elif layer.name() not in layers:
+            enable_addpdf = False
+
+        elif not hasattr(layer, 'providerType'):
+            enable_addpdf = False
+        elif layer.providerType() == 'wms':
+            enable_addpdf = False
+        elif not layer.geometryType() == 1:
+            enable_addpdf = False
+        else:
+            enable_addpdf = True
+        self.addPDFAction.setEnabled(enable_addpdf)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -193,8 +286,30 @@ class UnderMap:
     def add_operator(self):
         self.addop.exec_()
 
+
     def add_pdf(self):
         self.addpdf.exec_()
+
+
+    def split_pdf(self):
+        self.splitpdf.exec_()
+
+
+    def import_points(self):
+        self.importpoints.exec_()
+
+
+    def zoom_to_feature(self):
+        self.zoomto.exec_()
+
+    def manage_buffer(self):
+        project_path = get_project_path()
+        manage_buffer(project_path)
+        self.iface.messageBar().pushInfo('Undermap', "La génération des buffers a bien reussi."
+                                                            )
+    def control(self):
+
+        transparency_raster()
 
     def initialise_PDF(self):
         project_path = get_project_path()
@@ -254,3 +369,24 @@ class UnderMap:
                                                         .format(join(project_path, QgsProject.instance()
                                                         .baseName()+'.xlsx')))
 
+    def save_geojson(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
+            return
+        else:
+            if export_as_geojson(project_path):
+                 self.iface.messageBar().pushInfo('Undermap', "Les fichiers GeoJSON sont bien enregistrés dans {}".
+                                                  format(join(project_path, "GEOJSON"))
+                                                            )
+
+    def export_tfw(self):
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
+            return
+        else:
+            if export_tfw(project_path):
+                 self.iface.messageBar().pushInfo('Undermap', "Les fichiers twf sont bien enregistrés "
+
+                                                            )

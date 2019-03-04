@@ -28,7 +28,8 @@ from UnderMap.definition.fields import(
     class_def,
     diameter_def,
     rsx_def,
-    abandoned_def
+    abandoned_def,
+    aerial_def
     )
 import processing
 
@@ -107,6 +108,7 @@ def create_layer(to_dir, layer_name):
     fields.append(create_field(diameter_def))
     fields.append(create_field(class_def))
     fields.append(create_field(abandoned_def))
+    # fields.append(create_field(aerial_def))
 
     layer = QgsMemoryProviderUtils.createMemoryLayer(
         layer_name,
@@ -283,10 +285,15 @@ def export_tfw(path):
                 'OUTPUT':tif_output
             }
             result = processing.run(alg, params)
-            os.remove(tif_output)
-            os.rename(wld_file, wld_file.replace('wld', 'tfw'))
+
         for item_xml in get_elements_name(tif_path, False, 'xml'):
             os.remove(join(tif_path, item_xml))
+        for item_wld in get_elements_name(tif_path, False, 'wld'):
+            item_wld_path = join(tif_path, item_wld)
+            os.rename(item_wld_path, item_wld_path.replace('wld', 'tfw'))
+        for item_jpg in get_elements_name(tif_path, False, 'jpg'):
+            os.remove(join(tif_path, item_jpg))
+
 
 
 

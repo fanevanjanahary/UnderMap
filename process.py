@@ -63,7 +63,7 @@ def create_operator(name, pdf):
             os.makedirs(join(operator_dir, item_operator_sub_dir))
             if item_operator_sub_dir == 'SHP':
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)
-                add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), 'line_style.qml')
+                add_layer_in_group(layer, PROJECT_GROUP[2], 'line_style.qml')
             elif item_operator_sub_dir == 'PDF':
                 for item_sous_pdf in PDF_SUB_DIR:
                     sub_pdf = join(operator_dir, item_operator_sub_dir, item_sous_pdf)
@@ -90,7 +90,7 @@ def initialise_fdp(dxf_file):
     if save_as_shp(dxf_vl, shp_path, dxf_vl.crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         layer.setCrs(QgsProject.instance().crs())
-        add_layer_in_group(layer, get_group().findGroup(PROJECT_GROUP[1]),None)
+        add_layer_in_group(layer, PROJECT_GROUP[1], None)
         categorized_layer(layer, 'Layer')
 
 
@@ -110,7 +110,7 @@ def initialise_emprise(kml_file):
     dxf_vl = QgsVectorLayer(kml_file[0], layer_name, "ogr")
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
-        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[1]), 'emprise_style.qml')
+        add_layer_in_group(layer, PROJECT_GROUP[1], 'emprise_style.qml')
 
 
 def export_xlsx_report(path):

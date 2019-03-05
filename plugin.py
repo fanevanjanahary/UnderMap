@@ -28,7 +28,7 @@ from os.path import dirname, join, exists
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
-from qgis.core import QgsSettings, QgsProject
+from qgis.core import QgsSettings, QgsProject,  QgsMessageLog, Qgis
 
 # Initialize Qt resources from file resources.py
 # from .resources import *
@@ -50,7 +50,8 @@ from UnderMap.gis.tools import (
     get_layers_in_group,
     manage_buffer,
     transparency_raster,
-    export_tfw
+    export_tfw,
+    load_uloaded_data
     )
 
 
@@ -120,6 +121,9 @@ class UnderMap:
         QgsSettings().setValue("qgis/digitizing/reuseLastValues", True)
         # For enable/disable the addpdf editor icon
         self.iface.currentLayerChanged.connect(self.layer_changed)
+
+        # For load layer on qgis
+        self.iface.projectRead.connect(self.load_layer)
 
     @staticmethod
     def tr(message):
@@ -375,3 +379,6 @@ class UnderMap:
                                                                  " tfw est bien reussi"
 
                                                             )
+    def load_layer(self):
+        project_path = get_project_path()
+        load_uloaded_data(project_path)

@@ -3,16 +3,16 @@
 """Otuils pour les couches vector"""
 
 import os
-from os.path import join, basename, exists
+from os.path import join, basename, exists, splitext
 from qgis.core import (
-    QgsProject, QgsVectorLayer,
+    QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
     QgsWkbTypes, QgsMemoryProviderUtils,
     QgsSymbol, QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
     QgsFeatureRequest, QgsApplication,
     QgsProcessingContext, QgsProcessingFeedback,
-    QgsCoordinateReferenceSystem
+    QgsCoordinateReferenceSystem, Qgis, QgsMessageLog
     )
 
 from UnderMap.utilities.utilities import (
@@ -31,7 +31,7 @@ from UnderMap.definition.fields import(
     abandoned_def,
     aerial_def
     )
-import processing
+import processing, gdal, glob
 
 
 def create_field(definition):
@@ -48,22 +48,24 @@ def create_field(definition):
     return field
 
 
-def add_layer_in_group(layer, group, style_file):
+def add_layer_in_group(layer, group_name, style_file):
     """ Ajouter une couche dans un groupe dans qgis
 
     :param layer: Couche à ajouter
     :type: layer: QgsVectorLayer
 
-    :param group: Nom de groupe dans qgis
-    :type group: str
+    :param group_name: Nom de groupe dans qgis
+    :type group_name: str
 
     :param style_file: Le fichier QML
     :type style_file: str
 
     """
-    QgsProject.instance().addMapLayer(layer, False)
+    qgis_groups = get_group()
+    group = qgis_groups.findGroup(group_name)
     if layer.isValid():
-        group.addLayer(layer)
+        # group.addLayer(layer)
+        print(layer)
     if style_file is not None:
         layer.loadNamedStyle(join(QML_PATH, style_file))
        
@@ -259,42 +261,34 @@ def export_layer_as(layer, layer_format, ext, to_dir):
     if exists(layer_path):
         os.remove(layer_path)
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
+    QgsMessageLog.logMessage('Les fichiers GeoJSON sont bien enregistrés dans {}'
+                                             .format(to_dir), 'UnderMap', Qgis.Info)
 
 
 def export_tfw(path):
 
     operators_path = join(path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
-    alg = QgsApplication.processingRegistry().algorithmById(
-                                     "gdal:translate")
 
     for item in operators_content:
         tif_path = join(operators_path, item, 'TIF')
-        tif_el = get_elements_name(tif_path, False, '.tif')
-        for item_tif in tif_el:
-            tif_file = join(tif_path, item_tif)
-            tif_output = tif_file.replace('.tif', '.jpg')
-            wld_file = tif_output.replace('jpg', 'wld')
-            params = {
-                'INPUT': tif_file,
-                'TARGET_CRS':None,
-                'NODATA':None,
-                'COPY_SUBDATASETS':False,
-                'OPTIONS':'worldfile=yes',
-                'DATA_TYPE':0,
-                'OUTPUT':tif_output
-            }
-            result = processing.run(alg, params)
+        for infile in glob.glob(join(tif_path, '*.tif')):
+            src = gdal.Open(infile)
+            xform = src.GetGeoTransform()
 
-        for item_xml in get_elements_name(tif_path, False, 'xml'):
-            os.remove(join(tif_path, item_xml))
-        for item_wld in get_elements_name(tif_path, False, 'wld'):
-            item_wld_path = join(tif_path, item_wld)
-            os.rename(item_wld_path, item_wld_path.replace('wld', 'tfw'))
-        for item_jpg in get_elements_name(tif_path, False, 'jpg'):
-            os.remove(join(tif_path, item_jpg))
+            edit1=xform[0]+xform[1]/2
+            edit2=xform[3]+xform[5]/2
 
-
+            tfw = open(splitext(infile)[0] + '.tfw', 'wt')
+            tfw.write("%0.8f\n" % xform[1])
+            tfw.write("%0.8f\n" % xform[2])
+            tfw.write("%0.8f\n" % xform[4])
+            tfw.write("%0.8f\n" % xform[5])
+            tfw.write("%0.8f\n" % edit1)
+            tfw.write("%0.8f\n" % edit2)
+            tfw.close()
+        QgsMessageLog.logMessage('Le(s) fichier(s) tfw sont bien enregistré(s) dans {}'
+                                             .format(tif_path), 'UnderMap', Qgis.Info)
 
 
 def transparency_raster():
@@ -325,3 +319,32 @@ def zoom_to_selected(num_chant):
     features = layer.getFeatures(request)
     for item in features:
         layer.select(item.id())
+
+
+def load_uloaded_data(project_path):
+
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    for item in operators_content:
+        # load vectors
+        shp_path = join(operators_path, item, 'SHP')
+        for shp_file in glob.glob(join(shp_path, '*.shp')):
+
+            layer_name = basename(shp_file).replace(".shp", "")
+            layer = QgsVectorLayer(shp_file, layer_name, "ogr")
+            if layer.geometryType() == 1:
+                if layer_name not in get_layers_in_group('RSX'):
+                    add_layer_in_group(layer, 'RSX', 'line_style.qml')
+            else:
+                if layer_name not in get_layers_in_group('BUF'):
+                    add_layer_in_group(layer, 'BUF', 'buffer_style.qml')
+
+        #load raster
+        tif_path = join(operators_path, item, 'TIF')
+        for tif_file in glob.glob(join(tif_path, '*.tif')):
+            raster_name = basename(tif_file).replace(".tif", "")
+            raster = QgsRasterLayer(tif_file, raster_name, 'gdal')
+            if raster_name not in get_layers_in_group(item):
+                add_layer_in_group(raster, item, None)
+
+

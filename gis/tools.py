@@ -48,24 +48,25 @@ def create_field(definition):
     return field
 
 
-def add_layer_in_group(layer, group_name, style_file):
+def add_layer_in_group(layer, group, position, style_file):
     """ Ajouter une couche dans un groupe dans qgis
 
     :param layer: Couche à ajouter
     :type: layer: QgsVectorLayer
 
-    :param group_name: Nom de groupe dans qgis
-    :type group_name: str
+    :param group: Nom de groupe dans qgis
+    :type group: str
+
+    :param position: la place où on va mettre la couche
+    :type position: int
 
     :param style_file: Le fichier QML
     :type style_file: str
 
     """
-    qgis_groups = get_group()
-    group = qgis_groups.findGroup(group_name)
+    QgsProject.instance().addMapLayer(layer, False)
     if layer.isValid():
-        # group.addLayer(layer)
-        print(layer)
+        group.insertLayer(position, layer)
     if style_file is not None:
         layer.loadNamedStyle(join(QML_PATH, style_file))
        
@@ -324,8 +325,12 @@ def zoom_to_selected(num_chant):
 def load_uloaded_data(project_path):
 
     operators_path = join(project_path, PROJECT_GROUP[2])
-    operators_content = get_elements_name(operators_path, True, None)
-    for item in operators_content:
+    try:
+        operators_content = get_elements_name(operators_path, True, None)
+    except FileNotFoundError:
+        return
+    qgis_groups = get_group()
+    for i_op, item in enumerate(operators_content):
         # load vectors
         shp_path = join(operators_path, item, 'SHP')
         for shp_file in glob.glob(join(shp_path, '*.shp')):
@@ -334,17 +339,15 @@ def load_uloaded_data(project_path):
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
                 if layer_name not in get_layers_in_group('RSX'):
-                    add_layer_in_group(layer, 'RSX', 'line_style.qml')
+                    add_layer_in_group(layer, qgis_groups.findGroup('RSX'), i_op, 'line_style.qml')
             else:
                 if layer_name not in get_layers_in_group('BUF'):
-                    add_layer_in_group(layer, 'BUF', 'buffer_style.qml')
+                    add_layer_in_group(layer, qgis_groups.findGroup('BUF'), i_op, 'buffer_style.qml')
 
         #load raster
         tif_path = join(operators_path, item, 'TIF')
-        for tif_file in glob.glob(join(tif_path, '*.tif')):
+        for i_tif, tif_file in enumerate(glob.glob(join(tif_path, '*.tif'))):
             raster_name = basename(tif_file).replace(".tif", "")
             raster = QgsRasterLayer(tif_file, raster_name, 'gdal')
             if raster_name not in get_layers_in_group(item):
-                add_layer_in_group(raster, item, None)
-
-
+                add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)

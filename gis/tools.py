@@ -33,7 +33,7 @@ from UnderMap.definition.fields import(
     )
 import processing, gdal, glob
 
-from utilities.utilities import get_elements_name
+from UnderMap.utilities.utilities import get_elements_name
 
 
 def create_field(definition):

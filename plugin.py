@@ -155,12 +155,12 @@ class UnderMap:
             self.iface.mainWindow())
 
         self.reportAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'report.png')),
             'Générer le rapport',
             self.iface.mainWindow())
 
         self.initialiseFDPAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'fdp.png')),
             'Initialiser un FDP',
             self.iface.mainWindow())
 
@@ -180,7 +180,7 @@ class UnderMap:
             self.iface.mainWindow())
 
         self.importPointsAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'point.png')),
             'Importer les points de calage',
             self.iface.mainWindow())
 
@@ -195,12 +195,12 @@ class UnderMap:
             self.iface.mainWindow())
 
         self.controlAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'opacity.png')),
             'Controller',
             self.iface.mainWindow())
 
         self.zoomToAction = QAction(
-            QIcon(join(dirname(__file__), 'resources', 'icon.png')),
+            QIcon(join(dirname(__file__), 'resources', 'zoom-in.png')),
             'Zoom',
             self.iface.mainWindow())
 

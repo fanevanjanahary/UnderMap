@@ -34,20 +34,21 @@ def initialise_pdf(from_operators):
     :return:
     """
     create_group()
-    for item in get_elements_name(from_operators, True, None):
+    for i_op, item in enumerate(get_elements_name(from_operators, True, None)):
         operator_dir = join(from_operators, item)
-        create_operator(item, operator_dir)
+        create_operator(item, operator_dir, i_op)
 
 
-def create_operator(name, pdf):
+def create_operator(name, pdf, index):
     """ Creation d'un opeérateur
 
     :param name: Le nom de l'opérateur
     :type name: str
 
-
     :param pdf: Le(s) fichier(s) pdf associé(s) à un opérateur
     :type pdf: str
+
+    :param index: la position de la couche dans qgis groupe
     """
     root = join(get_project_path(), PROJECT_GROUP[2])
     operator_dir = join(root, name)
@@ -58,12 +59,18 @@ def create_operator(name, pdf):
             tif_group.addGroup(name)
     if not exists(root):
         os.makedirs(root)
+
+    operators_content = get_elements_name(root, True, None)
     if not exists(join(root, name)):
         for item_operator_sub_dir in OPERATOR_SUB_DIR:
             os.makedirs(join(operator_dir, item_operator_sub_dir))
             if item_operator_sub_dir == 'SHP':
                 layer = create_layer(join(operator_dir, item_operator_sub_dir), name)
-                add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), 'line_style.qml')
+                if index is not None:
+                    add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index, 'line_style.qml')
+                else:
+                    add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]),
+                                       len(operators_content), 'line_style.qml')
             elif item_operator_sub_dir == 'PDF':
                 for item_sous_pdf in PDF_SUB_DIR:
                     sub_pdf = join(operator_dir, item_operator_sub_dir, item_sous_pdf)
@@ -90,7 +97,7 @@ def initialise_fdp(dxf_file):
     if save_as_shp(dxf_vl, shp_path, dxf_vl.crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
         layer.setCrs(QgsProject.instance().crs())
-        add_layer_in_group(layer, get_group().findGroup(PROJECT_GROUP[1]),None)
+        add_layer_in_group(layer, get_group().findGroup(PROJECT_GROUP[1]), 0, None)
         categorized_layer(layer, 'Layer')
 
 
@@ -110,7 +117,7 @@ def initialise_emprise(kml_file):
     dxf_vl = QgsVectorLayer(kml_file[0], layer_name, "ogr")
     if save_as_shp(dxf_vl, shp_path, QgsProject.instance().crs()):
         layer = QgsVectorLayer(shp_path,  layer_name)
-        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[1]), 'emprise_style.qml')
+        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[1]), 1, 'emprise_style.qml')
 
 
 def export_xlsx_report(path):

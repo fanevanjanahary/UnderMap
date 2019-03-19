@@ -40,6 +40,13 @@ abandoned_def = {
     'precision': 0,
 }
 
+aerial_def = {
+    'name': 'Aérien',
+    'type': QVariant.Int,
+    'length': 1,
+    'precision': 0,
+}
+
 rsx_color = {
     'ELEC': '#FF5353',
     'GAZ': '#FFF411',

@@ -53,7 +53,7 @@ class AjouterOperateurDialog(QDialog, FORM_CLASS):
         name_operator = self.operator_name.value().upper()
         paths = self.select_pdf_action.filePath()
         file_operator = QgsFileWidget.splitFilePaths(paths)
-        QgsMessageLog.logMessage('UnderMap', "Ajouter un opérateur: {} avec PDF: {}"
-                                 .format(name_operator, ','.join(file_operator)), Qgis.Info)
-        create_operator(name_operator, file_operator)
+        QgsMessageLog.logMessage("Ajouter un exploitant: {} avec PDF: {}"
+                                 .format(name_operator, ','.join(file_operator)), 'UnderMap',  Qgis.Info)
+        create_operator(name_operator, file_operator, None)
         self.close()

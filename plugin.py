@@ -196,7 +196,7 @@ class UnderMap:
 
         self.controlAction = QAction(
             QIcon(join(dirname(__file__), 'resources', 'opacity.png')),
-            'Controller',
+            'Contrôler',
             self.iface.mainWindow())
 
         self.zoomToAction = QAction(

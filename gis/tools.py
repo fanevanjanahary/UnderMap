@@ -12,7 +12,8 @@ from qgis.core import (
     QgsCategorizedSymbolRenderer,
     QgsFeatureRequest, QgsApplication,
     QgsProcessingContext, QgsProcessingFeedback,
-    QgsCoordinateReferenceSystem, Qgis, QgsMessageLog
+    QgsCoordinateReferenceSystem, Qgis, QgsMessageLog,
+    QgsProcessingMultiStepFeedback
     )
 
 from UnderMap.utilities.utilities import (
@@ -353,3 +354,65 @@ def load_uloaded_data(project_path):
             raster = QgsRasterLayer(tif_file, raster_name, 'gdal')
             if raster_name not in get_layers_in_group(item):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
+
+
+def merge_feature_connected(layer):
+
+    # Field calculator parameters
+    alg_params_calculator = {
+        'FIELD_LENGTH': 20,
+        'FIELD_NAME': 'resume',
+        'FIELD_PRECISION': 0,
+        'FIELD_TYPE': 2,
+        'FORMULA': ' \"Reseau\"   || if( \"Diametre\"  is NULL, \'\',  \"Diametre\" ) '
+                   '||    \"Classe\"  ||  \"Abandon\"  ',
+        'INPUT': layer,
+        'NEW_FIELD': True,
+        'OUTPUT': 'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('qgis:fieldcalculator', alg_params_calculator)
+    layer = result['OUTPUT']
+    field = layer.dataProvider().fieldNameIndex('resume')
+    values = layer.uniqueValues(field)
+
+    for item in values:
+        expr = '"resume" = \'{}\' '.format(item)
+        request = QgsFeatureRequest().setFilterExpression(expr)
+        features = layer.getFeatures(request)
+        features_el = [i_f for i_f in features]
+        inc = 1
+        for feature in features_el:
+            f_geo = feature.geometry()
+            f_geo_pts = f_geo.get()[0].points()
+            while inc <  len(features_el) :
+                for i_feature in features_el[inc:]:
+                    f_i_geo = i_feature.geometry()
+                    layer.startEditing()
+                    if f_i_geo.get()[0].startPoint() in f_geo_pts or f_i_geo.get()[0].endPoint() in f_geo_pts:
+                        layer.changeAttributeValue(feature.id(), field, item+'_connected')
+                        layer.changeAttributeValue(i_feature.id(), field, item+'_connected')
+                    else:
+                        layer.changeAttributeValue(i_feature.id(), field, item+'{}'.format(feature.id()))
+                    layer.commitChanges ()
+
+                inc += 1
+
+    # Dissolve parameters
+    alg_params_dissolve =  {
+        'INPUT':layer,
+        'FIELD':['resume'],
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('native:dissolve', alg_params_dissolve)
+
+    # Drop Field parameters
+    alg_params_deletecolumn = {
+        'INPUT':result['OUTPUT'],
+        'COLUMN':['resume'],
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+
+    result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
+    QgsProject.instance().addMapLayer( result['OUTPUT'])
+
+

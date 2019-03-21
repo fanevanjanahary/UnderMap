@@ -356,7 +356,13 @@ def load_uloaded_data(project_path):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
 
 
-def merge_feature_connected(layer):
+def merge_features_connected(layer):
+    """
+    Fusionner les entités qui se joignent
+
+    :param layer:
+    :return:
+    """
 
     # Field calculator parameters
     alg_params_calculator = {
@@ -380,22 +386,32 @@ def merge_feature_connected(layer):
         request = QgsFeatureRequest().setFilterExpression(expr)
         features = layer.getFeatures(request)
         features_el = [i_f for i_f in features]
-        inc = 1
-        for feature in features_el:
+        for i, feature in enumerate(features_el):
+            layer.startEditing()
+            layer.changeAttributeValue(feature.id(), field, item+'{}'.format(feature.id()))
+            layer.commitChanges ()
+
+        for i, feature in enumerate(features_el):
+            inc = 1 + i
             f_geo = feature.geometry()
             f_geo_pts = f_geo.get()[0].points()
-            while inc <  len(features_el) :
-                for i_feature in features_el[inc:]:
-                    f_i_geo = i_feature.geometry()
+            # changé l'attribut resume
+
+            for i_feature in features_el[inc:]:
+                f_i_geo = i_feature.geometry()
+                if f_i_geo.get()[0].startPoint() in f_geo_pts or f_i_geo.get()[0].endPoint() in f_geo_pts:
                     layer.startEditing()
-                    if f_i_geo.get()[0].startPoint() in f_geo_pts or f_i_geo.get()[0].endPoint() in f_geo_pts:
-                        layer.changeAttributeValue(feature.id(), field, item+'_connected')
-                        layer.changeAttributeValue(i_feature.id(), field, item+'_connected')
+                    if '_connected_' in feature.attributes()[field]:
+                        layer.changeAttributeValue(i_feature.id(), field, feature.attributes()[field])
                     else:
-                        layer.changeAttributeValue(i_feature.id(), field, item+'{}'.format(feature.id()))
+                        layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
+                        layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
                     layer.commitChanges ()
 
-                inc += 1
+                """
+                else:
+                    layer.changeAttributeValue(i_feature.id(), field, item+'{}'.format(i_feature.id()))
+                """
 
     # Dissolve parameters
     alg_params_dissolve =  {
@@ -403,6 +419,7 @@ def merge_feature_connected(layer):
         'FIELD':['resume'],
         'OUTPUT':'TEMPORARY_OUTPUT'
     }
+
     result = processing.run('native:dissolve', alg_params_dissolve)
 
     # Drop Field parameters
@@ -413,6 +430,8 @@ def merge_feature_connected(layer):
     }
 
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
-    QgsProject.instance().addMapLayer( result['OUTPUT'])
+    QgsProject.instance().addMapLayer(result['OUTPUT'])
+
+
 
 

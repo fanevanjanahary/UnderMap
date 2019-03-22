@@ -152,7 +152,7 @@ def export_as_geojson(path):
                 export_layer_as(layer, "GeoJSON", ".geojson", to_dir)
     return True
 
-def merge_features_connected_layer(project_path):
+def merge_features_connected_layers(project_path):
 
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)

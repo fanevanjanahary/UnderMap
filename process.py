@@ -2,6 +2,7 @@
 
 """les actions"""
 import os
+import glob
 from os.path import join, basename, exists
 from qgis.core import QgsProject, QgsVectorLayer
 from UnderMap.library_extras import xlsxwriter
@@ -23,7 +24,8 @@ from UnderMap.gis.tools import (
     create_layer,
     categorized_layer,
     get_group,
-    export_layer_as
+    export_layer_as,
+    merge_features_connected
     )
 
 
@@ -149,3 +151,18 @@ def export_as_geojson(path):
                 layer = root + os.sep +file
                 export_layer_as(layer, "GeoJSON", ".geojson", to_dir)
     return True
+
+def merge_features_connected_layer(project_path):
+
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+
+    for i_op, item in enumerate(operators_content):
+        # load vectors
+        shp_path = join(operators_path, item, 'SHP')
+        for shp_file in glob.glob(join(shp_path, '*.shp')):
+
+            layer_name = basename(shp_file).replace(".shp", "")
+            layer = QgsVectorLayer(shp_file, layer_name, "ogr")
+            if layer.geometryType() == 1:
+                merge_features_connected(layer)

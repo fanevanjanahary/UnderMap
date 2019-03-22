@@ -51,7 +51,7 @@ from UnderMap.gis.tools import (
     manage_buffer,
     transparency_raster,
     export_tfw,
-    load_uloaded_data
+    load_unloaded_data
     )
 
 
@@ -381,4 +381,4 @@ class UnderMap:
                                                             )
     def load_layer(self):
         project_path = get_project_path()
-        load_uloaded_data(project_path)
+        load_unloaded_data(project_path)

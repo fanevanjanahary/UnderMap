@@ -3,7 +3,7 @@
 """Otuils pour les couches vector"""
 
 import os
-from os.path import join, basename, exists, splitext
+from os.path import join, basename, exists, splitext, dirname
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -175,6 +175,10 @@ def length_feature(layer, rsx, cls, abd):
         features = layer.getFeatures(request)
         for f in features:
             geom = f.geometry()
+            if geom.isNull():
+                layer.startEditing()
+                layer.deleteFeature(f.id())
+                layer.commitChanges()
             sum += geom.length()
         return round(sum)
     except AttributeError:
@@ -356,14 +360,16 @@ def load_unloaded_data(project_path):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
 
 
-def merge_features_connected(layer):
+def merge_features_connected(layer, path):
     """
     Fusionner les entités qui se joignent
 
     :param layer: la couche à traiter
     :type layer: QgsVectorLayer
-    """
 
+    :param path: le chemin pour enregistre
+    """
+    layer_name = basename(path).replace(".shp", "")
     # Field calculator parameters
     alg_params_calculator = {
         'FIELD_LENGTH': 20,
@@ -395,16 +401,19 @@ def merge_features_connected(layer):
         for i, feature in enumerate(features_el):
             inc = 1 + i
             f_geo = feature.geometry()
-            f_geo_pts = f_geo.get()[0].points()
-
+            if f_geo.isNull():
+                layer.startEditing()
+                layer.deleteFeature(feature.id())
+                layer.commitChanges()
+                continue
             # changer l'attribut resume si l'entité joint une autre entité
             for i_feature in features_el[inc:]:
                 f_i_geo = i_feature.geometry()
-                if f_i_geo.get()[0].startPoint() in f_geo_pts or f_i_geo.get()[0].endPoint() in f_geo_pts:
+                if f_geo.touches(f_i_geo):
                     layer.startEditing()
                     layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
                     layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
-                    layer.commitChanges ()
+                    layer.commitChanges()
 
     # Dissolve parameters
     alg_params_dissolve =  {
@@ -423,10 +432,18 @@ def merge_features_connected(layer):
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
     if layer.featureCount() != result['OUTPUT'].featureCount():
-        merge_features_connected( result['OUTPUT'])
+        merge_features_connected( result['OUTPUT'], path)
 
     else:
-        QgsProject.instance().addMapLayer(result['OUTPUT'])
+        path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
+        print(path)
+        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
+                                                path,
+                                                "utf-8", layer.crs(), "ESRI Shapefile"
+                                                )
+        layer_ret = QgsVectorLayer(path, layer_name, "ogr")
+
+        return layer_ret
 
 
 

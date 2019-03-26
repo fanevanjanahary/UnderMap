@@ -3,7 +3,7 @@
 """Otuils pour les couches vector"""
 
 import os
-from os.path import join, basename, exists, splitext
+from os.path import join, basename, exists, splitext, dirname
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -12,7 +12,8 @@ from qgis.core import (
     QgsCategorizedSymbolRenderer,
     QgsFeatureRequest, QgsApplication,
     QgsProcessingContext, QgsProcessingFeedback,
-    QgsCoordinateReferenceSystem, Qgis, QgsMessageLog
+    QgsCoordinateReferenceSystem, Qgis, QgsMessageLog,
+    QgsProcessingMultiStepFeedback
     )
 
 from UnderMap.utilities.utilities import (
@@ -174,6 +175,10 @@ def length_feature(layer, rsx, cls, abd):
         features = layer.getFeatures(request)
         for f in features:
             geom = f.geometry()
+            if geom.isNull():
+                layer.startEditing()
+                layer.deleteFeature(f.id())
+                layer.commitChanges()
             sum += geom.length()
         return round(sum)
     except AttributeError:
@@ -324,7 +329,7 @@ def zoom_to_selected(num_chant):
         layer.select(item.id())
 
 
-def load_uloaded_data(project_path):
+def load_unloaded_data(project_path):
 
     operators_path = join(project_path, PROJECT_GROUP[2])
     try:
@@ -353,3 +358,99 @@ def load_uloaded_data(project_path):
             raster = QgsRasterLayer(tif_file, raster_name, 'gdal')
             if raster_name not in get_layers_in_group(item):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
+
+
+def merge_features_connected(layer, path, index):
+    """
+    Fusionner les entités qui se joignent
+
+    :param layer: la couche à traiter
+    :type layer: QgsVectorLayer
+
+    :param path: le chemin pour enregistre
+    :type path: str
+
+    :param index: position dans qgis
+    :type index: int
+    """
+    if '_merge.shp' in path:
+        os.remove(path)
+
+    layer_name = basename(path).replace(".shp", "")
+    # Field calculator parameters
+    alg_params_calculator = {
+        'FIELD_LENGTH': 20,
+        'FIELD_NAME': 'resume',
+        'FIELD_PRECISION': 0,
+        'FIELD_TYPE': 2,
+        'FORMULA': ' \"Reseau\"   || if( \"Diametre\"  is NULL, \'\',  \"Diametre\" ) '
+                   '||    \"Classe\"  ||  \"Abandon\"  ',
+        'INPUT': layer,
+        'NEW_FIELD': True,
+        'OUTPUT': 'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('qgis:fieldcalculator', alg_params_calculator)
+    layer = result['OUTPUT']
+    field = layer.dataProvider().fieldNameIndex('resume')
+    values = layer.uniqueValues(field)
+
+    for item in values:
+        expr = '"resume" = \'{}\' '.format(item)
+        request = QgsFeatureRequest().setFilterExpression(expr)
+        features = layer.getFeatures(request)
+        features_el = [i_f for i_f in features]
+
+        for i, feature in enumerate(features_el):
+            layer.startEditing()
+            layer.changeAttributeValue(feature.id(), field, item+'{}'.format(feature.id()))
+            layer.commitChanges ()
+
+        for i, feature in enumerate(features_el):
+            inc = 1 + i
+            f_geo = feature.geometry()
+            if f_geo.isNull():
+                layer.startEditing()
+                layer.deleteFeature(feature.id())
+                layer.commitChanges()
+                continue
+            # changer l'attribut resume si l'entité joint une autre entité
+            for i_feature in features_el[inc:]:
+                f_i_geo = i_feature.geometry()
+                if f_geo.touches(f_i_geo):
+                    layer.startEditing()
+                    layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
+                    layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
+                    layer.commitChanges()
+
+    # Dissolve parameters
+    alg_params_dissolve =  {
+        'INPUT':layer,
+        'FIELD':['resume'],
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('native:dissolve', alg_params_dissolve)
+
+    # Drop Field parameters
+    alg_params_deletecolumn = {
+        'INPUT':result['OUTPUT'],
+        'COLUMN':['resume'],
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
+
+    if layer.featureCount() != result['OUTPUT'].featureCount():
+        merge_features_connected( result['OUTPUT'], path, index)
+
+    else:
+        path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
+        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
+                                                path,
+                                                "utf-8", layer.crs(), "ESRI Shapefile"
+                                                )
+        layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
+        qgis_groups = get_group()
+        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+
+
+
+

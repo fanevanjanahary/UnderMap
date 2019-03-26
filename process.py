@@ -156,8 +156,6 @@ def merge_features_connected_layers(project_path):
 
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
-    qgis_groups = get_group()
-
     for i_op, item in enumerate(operators_content):
         # load vectors
         shp_path = join(operators_path, item, 'SHP')
@@ -165,6 +163,6 @@ def merge_features_connected_layers(project_path):
             layer_name = basename(shp_file).replace(".shp", "")
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
-                layer = merge_features_connected(layer, shp_file)
-                QgsProject.instance().addMapLayer(layer)
+                merge_features_connected(layer, shp_file, i_op)
+
 

@@ -360,7 +360,7 @@ def load_unloaded_data(project_path):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
 
 
-def merge_features_connected(layer, path):
+def merge_features_connected(layer, path, index):
     """
     Fusionner les entités qui se joignent
 
@@ -368,7 +368,14 @@ def merge_features_connected(layer, path):
     :type layer: QgsVectorLayer
 
     :param path: le chemin pour enregistre
+    :type path: str
+
+    :param index: position dans qgis
+    :type index: int
     """
+    if '_merge.shp' in path:
+        os.remove(path)
+
     layer_name = basename(path).replace(".shp", "")
     # Field calculator parameters
     alg_params_calculator = {
@@ -432,18 +439,17 @@ def merge_features_connected(layer, path):
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
     if layer.featureCount() != result['OUTPUT'].featureCount():
-        merge_features_connected( result['OUTPUT'], path)
+        merge_features_connected( result['OUTPUT'], path, index)
 
     else:
         path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
-        print(path)
         QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
                                                 path,
                                                 "utf-8", layer.crs(), "ESRI Shapefile"
                                                 )
-        layer_ret = QgsVectorLayer(path, layer_name, "ogr")
-
-        return layer_ret
+        layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
+        qgis_groups = get_group()
+        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
 
 
 

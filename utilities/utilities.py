@@ -53,7 +53,10 @@ def copy_file(from_dir, to_dir, file_type):
                         split_pdf(pdf_from_brute, pdf_treat)
     else:
         if isfile(from_dir):
-            shutil.copy(from_dir, to_dir)
+            try:
+                shutil.copy(from_dir, to_dir)
+            except shutil.SameFileError:
+                return
             if from_dir.endswith(".pdf"):
                 split_pdf(from_dir, pdf_treat)
 

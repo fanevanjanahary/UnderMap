@@ -225,7 +225,6 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
             if count_csv_line(gcp_file) - 1 < 6:
-                print(item_pdf_treated)
                 worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated,
                                 customize_cell_format(None, None, "red", workbook))
                 worksheet.write(row + 1 + last_row_alerte, 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",

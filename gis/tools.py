@@ -202,7 +202,10 @@ def get_layers_in_group(group_name):
     :rtype: List
     """
     group = get_group().findGroup(group_name)
-    return [child.name() for child in group.children()]
+    try:
+        return [child.name() for child in group.children()]
+    except AttributeError:
+        return
 
 def manage_buffer(path):
 
@@ -345,11 +348,17 @@ def load_unloaded_data(project_path):
             layer_name = basename(shp_file).replace(".shp", "")
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
-                if layer_name not in get_layers_in_group('RSX'):
-                    add_layer_in_group(layer, qgis_groups.findGroup('RSX'), i_op, 'line_style.qml')
+                try:
+                    if layer_name not in get_layers_in_group('RSX'):
+                        add_layer_in_group(layer, qgis_groups.findGroup('RSX'), i_op, 'line_style.qml')
+                except TypeError:
+                    return
             else:
-                if layer_name not in get_layers_in_group('BUF'):
-                    add_layer_in_group(layer, qgis_groups.findGroup('BUF'), i_op, 'buffer_style.qml')
+                try:
+                    if layer_name not in get_layers_in_group('BUF'):
+                        add_layer_in_group(layer, qgis_groups.findGroup('BUF'), i_op, 'buffer_style.qml')
+                except TypeError:
+                    return
 
         #load raster
         tif_path = join(operators_path, item, 'TIF')
@@ -408,6 +417,16 @@ def merge_features_connected(layer, path, index):
         for i, feature in enumerate(features_el):
             inc = 1 + i
             f_geo = feature.geometry()
+
+            if not f_geo.isMultipart():
+                f_geo_pts = f_geo.get().points()
+                f_geo_start = f_geo.get().startPoint()
+                f_geo_end = f_geo.get().endPoint()
+            else:
+                f_geo_pts = f_geo.get()[0].points()
+                f_geo_start = f_geo.get()[0].startPoint()
+                f_geo_end = f_geo.get()[0].endPoint()
+
             if f_geo.isNull():
                 layer.startEditing()
                 layer.deleteFeature(feature.id())
@@ -416,11 +435,21 @@ def merge_features_connected(layer, path, index):
             # changer l'attribut resume si l'entité joint une autre entité
             for i_feature in features_el[inc:]:
                 f_i_geo = i_feature.geometry()
+                if not f_i_geo.isMultipart():
+                    f_i_geo_pts = f_i_geo.get().points()
+                else:
+                    f_i_geo_pts = f_i_geo.get()[0].points()
+
                 if f_geo.touches(f_i_geo):
-                    layer.startEditing()
-                    layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
-                    layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
-                    layer.commitChanges()
+                    try:
+                        common = [com for com in f_i_geo_pts if com in f_geo_pts][0]
+                    except IndexError:
+                        continue
+                    if common.distance(f_geo_start) == 0.0 or common.distance(f_geo_end) == 0.0:
+                        layer.startEditing()
+                        layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
+                        layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
+                        layer.commitChanges()
 
     # Dissolve parameters
     alg_params_dissolve =  {
@@ -438,18 +467,30 @@ def merge_features_connected(layer, path, index):
     }
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
+
     if layer.featureCount() != result['OUTPUT'].featureCount():
         merge_features_connected( result['OUTPUT'], path, index)
 
     else:
+        """
+        # convert geometry type parameters
+        alg_params_convert_geometry_type = {
+            'INPUT': result['OUTPUT'],
+            'TYPE':2,
+            'OUTPUT':'TEMPORARY_OUTPUT'
+        }
+        result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
+        """
+        QgsProject.instance().addMapLayer(result['OUTPUT'])
         path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
         QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
                                                 path,
                                                 "utf-8", layer.crs(), "ESRI Shapefile"
                                                 )
         layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
-        qgis_groups = get_group()
-        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+        # QgsProject.instance().addMapLayer(layer)
+        #qgis_groups = get_group()
+        #add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
 
 
 

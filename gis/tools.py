@@ -205,7 +205,7 @@ def get_layers_in_group(group_name):
     try:
         return [child.name() for child in group.children()]
     except AttributeError:
-        return
+        return []
 
 def manage_buffer(path):
 
@@ -256,7 +256,7 @@ def import_points(files, crs):
 def export_layer_as(layer, layer_format, ext, to_dir):
     """Convertir un fichier sph en format donné
     :param layer: la couche
-    :type layer: str
+    :type layer: str ou QgsVectorLayer
 
     :param layer_format: le format final
     :type layer_format: str
@@ -265,10 +265,14 @@ def export_layer_as(layer, layer_format, ext, to_dir):
     :type to_dir: str
 
     """
+    if isinstance(layer, str):
+        layer_name = basename(layer).replace(".shp", "")
+        layer = QgsVectorLayer(layer, layer_name, "ogr")
+    else:
+        layer_name = layer.name()
 
-    layer_name = basename(layer).replace(".shp", "")
-    layer = QgsVectorLayer(layer, layer_name, "ogr")
     layer_path = join(to_dir, layer_name+'{}'.format(ext))
+
     if exists(layer_path):
         os.remove(layer_path)
     QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
@@ -437,19 +441,23 @@ def merge_features_connected(layer, path, index):
                 f_i_geo = i_feature.geometry()
                 if not f_i_geo.isMultipart():
                     f_i_geo_pts = f_i_geo.get().points()
+                    f_i_geo_start = f_i_geo.get().startPoint()
+                    f_i_geo_end = f_i_geo.get().endPoint()
                 else:
                     f_i_geo_pts = f_i_geo.get()[0].points()
-
+                    f_i_geo_start = f_i_geo.get()[0].startPoint()
+                    f_i_geo_end = f_i_geo.get()[0].endPoint()
                 if f_geo.touches(f_i_geo):
                     try:
                         common = [com for com in f_i_geo_pts if com in f_geo_pts][0]
                     except IndexError:
                         continue
                     if common.distance(f_geo_start) == 0.0 or common.distance(f_geo_end) == 0.0:
-                        layer.startEditing()
-                        layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
-                        layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
-                        layer.commitChanges()
+                        if common.distance(f_i_geo_start) == 0.0 or common.distance(f_i_geo_end) == 0.0:
+                            layer.startEditing()
+                            layer.changeAttributeValue(feature.id(), field, item+'_connected_{}'.format(i))
+                            layer.changeAttributeValue(i_feature.id(), field, item+'_connected_{}'.format(i))
+                            layer.commitChanges()
 
     # Dissolve parameters
     alg_params_dissolve =  {
@@ -472,26 +480,38 @@ def merge_features_connected(layer, path, index):
         merge_features_connected( result['OUTPUT'], path, index)
 
     else:
-        """
-        # convert geometry type parameters
-        alg_params_convert_geometry_type = {
-            'INPUT': result['OUTPUT'],
-            'TYPE':2,
-            'OUTPUT':'TEMPORARY_OUTPUT'
-        }
-        result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
-        """
-        QgsProject.instance().addMapLayer(result['OUTPUT'])
+
         path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
+        """
         QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
                                                 path,
                                                 "utf-8", layer.crs(), "ESRI Shapefile"
                                                 )
-        layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
-        # QgsProject.instance().addMapLayer(layer)
+        """
+        # layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
+        layer = result['OUTPUT']
+        field = layer.dataProvider().fieldNameIndex('Exploitant')
+        value = list(layer.uniqueValues(field))[0]
+        expr = '"Exploitant" = \'{}\' '.format(value)
+        request = QgsFeatureRequest().setFilterExpression(expr)
+        features = layer.getFeatures(request)
+        # change geometry type
+        for f in features:
+            geom = f.geometry()
+            if geom.isMultipart():
+                new_geom = geom.mergeLines()
+                layer.startEditing()
+                layer.changeGeometry(f.id(), new_geom)
+                layer.commitChanges()
+
+        # convert geometry type parameters
+        alg_params_convert_geometry_type = {
+            'INPUT': layer,
+            'TYPE':2,
+            'OUTPUT':'TEMPORARY_OUTPUT'
+        }
+        result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
+        export_layer_as(result['OUTPUT'], "GeoJSON", ".geojson", dirname(path))
+        # QgsProject.instance().addMapLayer(result['OUTPUT'])
         #qgis_groups = get_group()
         #add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
-
-
-
-

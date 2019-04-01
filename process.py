@@ -154,6 +154,12 @@ def export_as_geojson(path):
 
 def merge_features_connected_layers(project_path):
 
+    root = get_group()
+    group = root.findGroup(PROJECT_GROUP[2])
+    if group is not None:
+        for child in group.children():
+            QgsProject.instance().removeMapLayer(child.layerId())
+
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
     for i_op, item in enumerate(operators_content):

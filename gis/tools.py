@@ -253,7 +253,7 @@ def import_points(files, crs):
         points = qgis_groups.findGroup('POINTS CALAGE')
         add_layer_in_group(point_layer, points, "point_style.qml")
 
-def export_layer_as(layer, layer_format, ext, to_dir):
+def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
     """Convertir un fichier sph en format donné
     :param layer: la couche
     :type layer: str ou QgsVectorLayer
@@ -265,17 +265,23 @@ def export_layer_as(layer, layer_format, ext, to_dir):
     :type to_dir: str
 
     """
-    if isinstance(layer, str):
-        layer_name = basename(layer).replace(".shp", "")
-        layer = QgsVectorLayer(layer, layer_name, "ogr")
-    else:
-        layer_name = layer.name()
+    if layer_name is None:
+        if isinstance(layer, str):
+            layer_name = basename(layer).replace(".shp", "")
+            layer = QgsVectorLayer(layer, layer_name, "ogr")
+        else:
+            layer_name = layer.name()
 
     layer_path = join(to_dir, layer_name+'{}'.format(ext))
 
     if exists(layer_path):
         os.remove(layer_path)
-    QgsVectorFileWriter.writeAsVectorFormat(layer, layer_path, "utf-8", layer.crs(), layer_format)
+    QgsVectorFileWriter.writeAsVectorFormat(layer,
+                                            layer_path,
+                                            "utf-8",
+                                            QgsProject.instance().crs(),
+                                            layer_format
+                                            )
     QgsMessageLog.logMessage('Les fichiers GeoJSON sont bien enregistrés dans {}'
                                              .format(to_dir), 'UnderMap', Qgis.Info)
 
@@ -475,26 +481,18 @@ def merge_features_connected(layer, path, index):
     }
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
-
     if layer.featureCount() != result['OUTPUT'].featureCount():
         merge_features_connected( result['OUTPUT'], path, index)
 
     else:
-
-        path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
-        """
-        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
-                                                path,
-                                                "utf-8", layer.crs(), "ESRI Shapefile"
-                                                )
-        """
-        # layer = QgsVectorLayer(path, basename(path).split('.')[0], "ogr")
+        QgsProject.instance().addMapLayer(result['OUTPUT'])
         layer = result['OUTPUT']
         field = layer.dataProvider().fieldNameIndex('Exploitant')
         value = list(layer.uniqueValues(field))[0]
         expr = '"Exploitant" = \'{}\' '.format(value)
         request = QgsFeatureRequest().setFilterExpression(expr)
         features = layer.getFeatures(request)
+
         # change geometry type
         for f in features:
             geom = f.geometry()
@@ -511,7 +509,33 @@ def merge_features_connected(layer, path, index):
             'OUTPUT':'TEMPORARY_OUTPUT'
         }
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
-        export_layer_as(result['OUTPUT'], "GeoJSON", ".geojson", dirname(path))
+
+        # create GEOJOSN File
+        to_dir = join(dirname(path)[0:-3], 'GEOJSON')
+        create_dir(to_dir, None)
+
+        export_layer_as(result['OUTPUT'], layer_name, "GeoJSON", ".geojson", to_dir)
+        path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
+        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
+                                                path,
+                                                "utf-8",
+                                                QgsProject.instance().crs(),
+                                                "ESRI Shapefile"
+                                                )
+
+        layer = QgsVectorLayer(path, layer_name, "ogr")
         # QgsProject.instance().addMapLayer(result['OUTPUT'])
-        #qgis_groups = get_group()
-        #add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+        qgis_groups = get_group()
+        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+
+
+def delete_data_source(file_path):
+    from osgeo import gdal, ogr
+    # delete shp file
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    driver.DeleteDataSource(file_path)
+    i = 0
+    while i<4:
+        delete_data_source(file_path)
+        i += 1
+

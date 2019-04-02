@@ -3,7 +3,7 @@
 """les actions"""
 import os
 import glob
-from os.path import join, basename, exists
+from os.path import join, basename, exists, dirname
 from qgis.core import QgsProject, QgsVectorLayer
 from UnderMap.library_extras import xlsxwriter
 from UnderMap.report.digitalize_report import export_report_file
@@ -149,7 +149,7 @@ def export_as_geojson(path):
                 to_dir = join(root[0:-3], 'GEOJSON')
                 create_dir(to_dir, None)
                 layer = root + os.sep +file
-                export_layer_as(layer, "GeoJSON", ".geojson", to_dir)
+                export_layer_as(layer, None, "GeoJSON", ".geojson", to_dir)
     return True
 
 def merge_features_connected_layers(project_path):
@@ -159,7 +159,8 @@ def merge_features_connected_layers(project_path):
     if group is not None:
         for child in group.children():
             QgsProject.instance().removeMapLayer(child.layerId())
-
+    root.removeChildNode(group)
+    
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
     for i_op, item in enumerate(operators_content):
@@ -170,5 +171,4 @@ def merge_features_connected_layers(project_path):
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
                 merge_features_connected(layer, shp_file, i_op)
-
 

@@ -2,8 +2,8 @@
 
 """Otuils pour les couches vector"""
 
-import os
-from os.path import join, basename, exists, splitext, dirname
+import shutil
+from os.path import join, basename, splitext, dirname
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -274,13 +274,13 @@ def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
 
     layer_path = join(to_dir, layer_name+'{}'.format(ext))
 
-    if exists(layer_path):
-        os.remove(layer_path)
+    options = QgsVectorFileWriter.SaveVectorOptions()
+    options.driverName = layer_format
+    options.layerName = layer_name
+    options.fileEncoding = 'utf-8'
     QgsVectorFileWriter.writeAsVectorFormat(layer,
                                             layer_path,
-                                            "utf-8",
-                                            QgsProject.instance().crs(),
-                                            layer_format
+                                            options
                                             )
     QgsMessageLog.logMessage('Les fichiers GeoJSON sont bien enregistrés dans {}'
                                              .format(to_dir), 'UnderMap', Qgis.Info)
@@ -392,8 +392,6 @@ def merge_features_connected(layer, path, index):
     :param index: position dans qgis
     :type index: int
     """
-    if '_merge.shp' in path:
-        os.remove(path)
 
     layer_name = basename(path).replace(".shp", "")
     # Field calculator parameters
@@ -485,7 +483,7 @@ def merge_features_connected(layer, path, index):
         merge_features_connected( result['OUTPUT'], path, index)
 
     else:
-        QgsProject.instance().addMapLayer(result['OUTPUT'])
+
         layer = result['OUTPUT']
         field = layer.dataProvider().fieldNameIndex('Exploitant')
         value = list(layer.uniqueValues(field))[0]
@@ -510,23 +508,26 @@ def merge_features_connected(layer, path, index):
         }
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
 
-        # create GEOJOSN File
-        to_dir = join(dirname(path)[0:-3], 'GEOJSON')
-        create_dir(to_dir, None)
-
-        export_layer_as(result['OUTPUT'], layer_name, "GeoJSON", ".geojson", to_dir)
-        path = join(dirname(path), '{}_{}.shp'.format(layer_name, 'merge'))
+        # write the shp file
+        shutil.rmtree(dirname(path), ignore_errors=True)
+        path = dirname(path)+'_'
+        create_dir(path, None)
+        result['OUTPUT'].setCrs(QgsProject.instance().crs())
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = 'ESRI Shapefile'
+        options.layerName = layer_name
+        options.fileEncoding = 'utf-8'
         QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
-                                                path,
-                                                "utf-8",
-                                                QgsProject.instance().crs(),
-                                                "ESRI Shapefile"
+                                                join(path, layer_name+'.shp'),
+                                                options
                                                 )
 
-        layer = QgsVectorLayer(path, layer_name, "ogr")
+        # create layer
+        layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
         # QgsProject.instance().addMapLayer(result['OUTPUT'])
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+
 
 
 def delete_data_source(file_path):
@@ -534,8 +535,3 @@ def delete_data_source(file_path):
     # delete shp file
     driver = ogr.GetDriverByName('ESRI Shapefile')
     driver.DeleteDataSource(file_path)
-    i = 0
-    while i<4:
-        delete_data_source(file_path)
-        i += 1
-

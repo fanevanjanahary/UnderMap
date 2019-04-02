@@ -215,7 +215,7 @@ def manage_buffer(path):
     alg = QgsApplication.processingRegistry().algorithmById(
                                      "model:Génerer les buffers")
 
-    for item in operators_content:
+    for index, item in enumerate(operators_content):
         params = {
             'reseau':'{}/{}/SHP/{}.shp'.format(operators_path, item, item),
             'qgis:deletecolumn_4:sortie':'{}/{}/SHP/{}_BUF.shp'.format(operators_path, item, item)
@@ -225,7 +225,7 @@ def manage_buffer(path):
         layer_name = basename(result['qgis:deletecolumn_4:sortie']).replace(".shp", "")
         buf_layer = QgsVectorLayer(result['qgis:deletecolumn_4:sortie'], layer_name, "ogr")
         if buf is not None:
-            add_layer_in_group(buf_layer, buf, 'buffer_style.qml')
+            add_layer_in_group(buf_layer, buf, index, 'buffer_style.qml')
 
 
 def import_points(files, crs):

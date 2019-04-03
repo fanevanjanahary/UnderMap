@@ -149,7 +149,7 @@ def export_as_geojson(path):
                 to_dir = join(root[0:-3], 'GEOJSON')
                 create_dir(to_dir, None)
                 layer = root + os.sep +file
-                export_layer_as(layer, None, "GeoJSON", ".geojson", to_dir)
+                export_layer_as(layer, None, "GeoJSON", to_dir)
     return True
 
 def merge_features_connected_layers(project_path):

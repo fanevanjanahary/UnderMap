@@ -4,7 +4,7 @@ from os import rename, rmdir
 from os.path import join, exists
 from qgis.core import QgsVectorLayer, QgsProject
 from UnderMap.gis.tools import length_feature
-from UnderMap.definition.fields import rsx_color
+from UnderMap.definition.definitions import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
     get_elements_name,
@@ -45,9 +45,9 @@ def create_head_content(worksheet, title, header_format, cell, workbook):
 
     worksheet.set_column('A:A', 25)
     worksheet.insert_image('A1', logo)
-    worksheet.set_column('{}:{}'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), 40)
+    worksheet.set_column('{0}:{0}'.format(chr(cell_to_nbr + 12)), 40)
     worksheet.merge_range('{}6:{}6'.format(cell, chr(cell_to_nbr + 11)), head[0], header_format)
-    worksheet.merge_range('{}6:{}8'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), head[4], header_format)
+    worksheet.merge_range('{0}6:{0}8'.format(chr(cell_to_nbr + 12)), head[4], header_format)
     worksheet.merge_range('B2:{}2'.format(chr(cell_to_nbr + 11)), 'UnderMap',
                           customize_cell_format(1, 0, '#bebebe', workbook))
 
@@ -188,8 +188,8 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
     worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methode de calage', header_format)
-    worksheet.merge_range('E{}:F{}'.format(row, row), 'Ecart (m)', header_format)
-    worksheet.merge_range('G{}:H{}'.format(row, row), 'Ecart (pix)', header_format)
+    worksheet.merge_range('E{0}:F{0}'.format(row), 'Ecart (m)', header_format)
+    worksheet.merge_range('G{0}:H{0}'.format(row), 'Ecart (pix)', header_format)
     worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
     worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
     ecart_cell = 0
@@ -242,14 +242,16 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
                                     customize_cell_format(None, None, "red", workbook))
                 else:
                     worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
-                worksheet.merge_range('C{}:D{}'.format(row + 2 + len(pdf_in_tif), row + 2 + len(pdf_in_tif)),
-                                      'Moyenne', header_format)
+                worksheet.merge_range('C{0}:D{0}'.format(row + 2 + len(pdf_in_tif)),
+                                      'Moyenne',
+                                      header_format
+                                      )
                 for i_cell_mean, cell_mean in enumerate(['E','F']):
-                    worksheet.write_formula(row + 1+ len(pdf_in_tif), 4+ i_cell_mean,
-                                            '=AVERAGE({}{}:{}{})'.format(cell_mean, row + 2
-
-                                                                         , cell_mean,
-                                                                         row+ 1+ len(pdf_in_tif)),
+                    worksheet.write_formula(row + 1+ len(pdf_in_tif),
+                                            4+ i_cell_mean,
+                                            '=AVERAGE({0}{1}:{0}{2})'.format(cell_mean,
+                                                                           row + 2,
+                                                                           row+ 1+ len(pdf_in_tif)),
                                             )
             else:
                 return

@@ -24,13 +24,14 @@ from UnderMap.utilities.utilities import (
     groups_to_array,
     get_elements_name
     )
-from UnderMap.definition.fields import(
+from UnderMap.definition.definitions import(
     operator_def,
     class_def,
     diameter_def,
     rsx_def,
     abandoned_def,
-    aerial_def
+    aerial_def,
+    extension
     )
 import processing, gdal, glob
 
@@ -253,10 +254,14 @@ def import_points(files, crs):
         points = qgis_groups.findGroup('POINTS CALAGE')
         add_layer_in_group(point_layer, points, "point_style.qml")
 
-def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
+
+def export_layer_as(layer, layer_name, layer_format, to_dir):
     """Convertir un fichier sph en format donné
     :param layer: la couche
     :type layer: str ou QgsVectorLayer
+
+    :param layer_name nom du fichier en sorti
+    :type layer_name: str
 
     :param layer_format: le format final
     :type layer_format: str
@@ -272,7 +277,7 @@ def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
         else:
             layer_name = layer.name()
 
-    layer_path = join(to_dir, layer_name+'{}'.format(ext))
+    layer_path = join(to_dir, layer_name+'{}'.format(extension[layer_format]))
 
     options = QgsVectorFileWriter.SaveVectorOptions()
     options.driverName = layer_format
@@ -509,29 +514,24 @@ def merge_features_connected(layer, path, index):
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
 
         # write the shp file
-        shutil.rmtree(dirname(path), ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
+        """
         path = dirname(path)+'_'
         create_dir(path, None)
+        """
         result['OUTPUT'].setCrs(QgsProject.instance().crs())
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = 'ESRI Shapefile'
         options.layerName = layer_name
         options.fileEncoding = 'utf-8'
         QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
-                                                join(path, layer_name+'.shp'),
+                                                path,
+                                                #join(path, layer_name+'.shp'),
                                                 options
                                                 )
 
         # create layer
-        layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
-        # QgsProject.instance().addMapLayer(result['OUTPUT'])
+        #layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
+        layer = QgsVectorLayer(path, layer_name, "ogr")
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
-
-
-
-def delete_data_source(file_path):
-    from osgeo import gdal, ogr
-    # delete shp file
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    driver.DeleteDataSource(file_path)

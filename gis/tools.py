@@ -384,7 +384,7 @@ def load_unloaded_data(project_path):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
 
 
-def merge_features_connected(layer, path, index):
+def merge_features_connected(layer, path):
     """
     Fusionner les entités qui se joignent
 
@@ -485,7 +485,7 @@ def merge_features_connected(layer, path, index):
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
     if layer.featureCount() != result['OUTPUT'].featureCount():
-        merge_features_connected( result['OUTPUT'], path, index)
+        merge_features_connected( result['OUTPUT'], path)
 
     else:
 
@@ -513,25 +513,14 @@ def merge_features_connected(layer, path, index):
         }
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
 
-        # write the shp file
-        shutil.rmtree(path, ignore_errors=True)
-        """
-        path = dirname(path)+'_'
-        create_dir(path, None)
-        """
         result['OUTPUT'].setCrs(QgsProject.instance().crs())
-        options = QgsVectorFileWriter.SaveVectorOptions()
-        options.driverName = 'ESRI Shapefile'
-        options.layerName = layer_name
-        options.fileEncoding = 'utf-8'
-        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
-                                                path,
-                                                #join(path, layer_name+'.shp'),
-                                                options
-                                                )
+        create_dir(dirname(path)+'_', None)
+        export_layer_as(layer, layer_name, "ESRI Shapefile", dirname(path)+'_')
 
         # create layer
         #layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
+        """
         layer = QgsVectorLayer(path, layer_name, "ogr")
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+        """

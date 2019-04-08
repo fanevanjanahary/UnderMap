@@ -3,8 +3,9 @@
 """les actions"""
 import os
 import glob
+import shutil
 from os.path import join, basename, exists, dirname
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter
 from UnderMap.library_extras import xlsxwriter
 from UnderMap.report.digitalize_report import export_report_file
 from UnderMap.utilities.utilities import (
@@ -154,15 +155,9 @@ def export_as_geojson(path):
 
 def merge_features_connected_layers(project_path):
 
-    root = get_group()
-    group = root.findGroup(PROJECT_GROUP[2])
-    if group is not None:
-        for child in group.children():
-            QgsProject.instance().removeMapLayer(child.layerId())
-    root.removeChildNode(group)
-    
-    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_path = join(project_path, 'RSX')
     operators_content = get_elements_name(operators_path, True, None)
+
     for i_op, item in enumerate(operators_content):
         # load vectors
         shp_path = join(operators_path, item, 'SHP')
@@ -170,5 +165,47 @@ def merge_features_connected_layers(project_path):
             layer_name = basename(shp_file).replace(".shp", "")
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
-                merge_features_connected(layer, shp_file, i_op)
+                merge_features_connected(layer, shp_file)
 
+
+def get_layers_merged():
+
+    layers = []
+    project_path = get_project_path()
+    operators_path = join(project_path, 'RSX')
+    operators_content = get_elements_name(operators_path, True, None)
+    for i_op, item in enumerate(operators_content):
+        shp_path = join(operators_path, item, 'SHP_')
+        for shp_file in glob.glob(join(shp_path, '*.shp')):
+            layer_name = basename(shp_file).replace(".shp", "")
+            layer = QgsVectorLayer(shp_file, layer_name, "ogr")
+            layer.setCrs(QgsProject.instance().crs())
+            layers.append(layer)
+    return layers
+
+
+def erase_two_layers(project_path):
+
+    root = QgsProject.instance().layerTreeRoot()
+    group = root.findGroup('RSX')
+    operators_path = join(project_path, 'RSX')
+    operators_content = get_elements_name(operators_path, True, None)
+
+    layers = get_layers_merged()
+    for i_op, item in enumerate(operators_content):
+        # load vectors
+        shp_path = join(operators_path, item, 'SHP')
+        for shp_file in glob.glob(join(shp_path, '*.shp')):
+            layer_name = basename(shp_file).replace(".shp", "")
+            if '_' not in layer_name:
+                print(layers[i_op], layers[i_op].name())
+                if group is not None:
+                    for child in group.children():
+                        QgsProject.instance().removeMapLayer(child.layerId())
+                root.removeChildNode(group)
+                QgsVectorFileWriter.deleteShapeFile(shp_file)
+                export_layer_as(layers[i_op], layer_name, "ESRI Shapefile", dirname(shp_file))
+        shp_merged_path = join(operators_path, item, 'SHP_')
+        print(shp_merged_path)
+        QgsVectorFileWriter.deleteShapeFile(shp_file.replace('SHP','SHP_'))
+        shutil.rmtree(shp_merged_path, ignore_errors=True)

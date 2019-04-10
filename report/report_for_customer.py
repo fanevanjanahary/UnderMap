@@ -16,35 +16,41 @@ def create_head_content(worksheet, workbook):
               ]
 
 
-    worksheet.write(2, 0, "Lg Tranchée")
-    worksheet.write(3, 0, 'S. m²')
-    worksheet.write(5, 0, 'COMMUNE:')
-    worksheet.write(8, 0, 'COMMUNE:')
+    worksheet.write(0, 2, "Lg Tranchée")
+    worksheet.write(0, 3, 'S. m²')
+    worksheet.write(0, 5, 'COMMUNE:')
+    worksheet.write(0, 8, 'COMMUNE:')
+    worksheet.write('C6', "Terrassement > 100² ?", customize_cell_format(1, 1, '#CCFF99', workbook))
+    worksheet.write('C2', "40", customize_cell_format(1, 1, '#BFBFBF', workbook))
+    worksheet.write_formula('D2', '=C2*0.6', customize_cell_format(1, 1, '#BFBFBF', workbook))
+    worksheet.write_formula('D6', '=IF(D2>100, "OUI", "NON")', customize_cell_format(1, 1, '#D9D9D9', workbook))
+    worksheet.write_formula('G6', '=IF(I1="URBAINE", "OUI", "NON")', customize_cell_format(1, 1, '#D9D9D9', workbook))
+    worksheet.merge_range('E6:F6', 'Unité Urbaine ?', customize_cell_format(1, 1, '#99FF99', workbook))
+    worksheet.merge_range('H6:I6', 'Réseaux en classe B ou C ?', customize_cell_format(1, 1, '#33CC33', workbook))
     worksheet.merge_range('G1:H1', 'TRELAZE')
     worksheet.merge_range('G1:H1', 'URBAINE')
     worksheet.set_column('C:C', 25)
 
-    worksheet.merge_range('A4:B6', "Tableau de Synthèse")
+    worksheet.merge_range('A4:B6', "Tableau de Synthèse", customize_cell_format(1, 1, '#FFFFFF', workbook))
     worksheet.merge_range('C4:L4', "N°/ REFERENCE PROJET", customize_cell_format(1, 1, '#FFC090', workbook))
-    worksheet.set_row('C4:L4', 47)
-    worksheet.merge_range('C5:L5', 'TYPE DE TRAVAUX ENEDIS')
-    worksheet.set_row('C5:L5', 47)
-    worksheet.merge_range('M4:S4', 'DA27/049947')
-    worksheet.set_row('M4:S4', 47)
-    worksheet.merge_range('M5:S8', '- COLL IMM - Ilot Nord -Avenue de la Quantiniere TRELAZE ')
-    worksheet.merge_range('A7:B7', "Unité selon l'INSEE")
-    worksheet.set_row('A7:B7', 47)
-    worksheet.merge_range('C7:L7', '=IF($I$1="URBAINE", "URBAINE", "NON URBAINE")")')
-    worksheet.set_row('C7:L7', 47)
-    worksheet.merge_range('C8:L8', '2018112701029PBB')
-    worksheet.set_row('C8:L8', 47)
-    worksheet.merge_range('A8:B8', "N° GUICHET UNIQUE")
-    worksheet.set_row('A8:B8', 47)
+    worksheet.merge_range('C5:L5', 'TYPE DE TRAVAUX ENEDIS', customize_cell_format(1, 1, '#FFC090', workbook))
+    worksheet.merge_range('M4:S4', 'DA27/049947', customize_cell_format(1, 1, '#FFC090', workbook))
+    worksheet.merge_range('M5:S8', '- COLL IMM - Ilot Nord -Avenue de la Quantiniere TRELAZE ',
+                          customize_cell_format(1, 1, '#FFC090', workbook)
+                          )
+    worksheet.merge_range('A7:B7', "Unité selon l'INSEE", customize_cell_format(1, 1, '#BFBFBF', workbook))
+    worksheet.merge_range('C7:L7', """=IF($I$1="URBAINE", "URBAINE", "NON URBAINE")")""",
+                          customize_cell_format(1, 1, '#BFBFBF', workbook)
+                          )
+    worksheet.merge_range('C8:L8', '2018112701029PBB', customize_cell_format(1, 1, '#BFBFBF', workbook))
+    worksheet.merge_range('A8:B8', "N° GUICHET UNIQUE", customize_cell_format(1, 1, '#BFBFBF', workbook))
+
+    for row in range(3, 14):
+        worksheet.set_row(row, 25)
 
     for i, item in enumerate(titles):
         row = 9 + i
-        worksheet.merge_range('A{0}:D{0}'.format(row), item)
-        worksheet.set_row('A{0}:D{0}'.format(row), 47)
+        worksheet.merge_range('A{0}:D{0}'.format(row), item, customize_cell_format(1, 1, '#FFFFCC', workbook))
 
 
 def write_report(workbook):

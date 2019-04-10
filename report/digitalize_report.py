@@ -21,6 +21,22 @@ from UnderMap.utilities.utilities import (
 ECART = ['Moyen', 'Max']
 
 def customize_cell_format(top, bottom, color, workbook):
+    """ changer le style d'une cellule
+
+    :param top: Bordure haut
+    :type top: int
+
+    :param bottom: Bordure bas
+    :type bottom: int
+
+    :param color: couleur background
+    :type color: str
+
+    :param workbook: Le fichier à écrire
+    :type workbook: Workbook
+
+    :return:
+    """
     cell_format = workbook.add_format({
         'bold': 1,
         'border': 1,

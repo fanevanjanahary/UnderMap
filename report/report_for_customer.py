@@ -2,15 +2,19 @@
 
 from .digitalize_report import customize_cell_format
 
-def create_head_content(worksheet, header_format, cell, workbook):
+BUFFER_SYNTH = ["Longueurs concernées", "BE", "RP", "Résultats"]
 
-    titles = ["Exploitant concerné",
-              "Type", "Sensible O/N",
-              "Classe de précision",
-              "RDV sur site O/N",
-              "IC obligatoires O/N"
+def create_head_content(worksheet, workbook):
+
+    titles = [
+                "Exploitant concerné",
+                "Type",
+                "Sensible O/N",
+                "Classe de précision",
+                "RDV sur site O/N",
+                "IC obligatoires O/N"
               ]
-    buffer_result = ["Longueurs concernées", "BE", "RP", "Résultats"]
+
 
     worksheet.write(2, 0, "Lg Tranchée")
     worksheet.write(3, 0, 'S. m²')
@@ -21,7 +25,7 @@ def create_head_content(worksheet, header_format, cell, workbook):
     worksheet.set_column('C:C', 25)
 
     worksheet.merge_range('A4:B6', "Tableau de Synthèse")
-    worksheet.merge_range('C4:L4', "N°/ REFERENCE PROJET")
+    worksheet.merge_range('C4:L4', "N°/ REFERENCE PROJET", customize_cell_format(1, 1, '#FFC090', workbook))
     worksheet.set_row('C4:L4', 47)
     worksheet.merge_range('C5:L5', 'TYPE DE TRAVAUX ENEDIS')
     worksheet.set_row('C5:L5', 47)
@@ -43,3 +47,8 @@ def create_head_content(worksheet, header_format, cell, workbook):
         worksheet.set_row('A{0}:D{0}'.format(row), 47)
 
 
+def write_report(workbook):
+
+    worksheet = workbook.add_worksheet("Tableaux de synthèse 1")
+    create_head_content(worksheet, workbook)
+    workbook.close()

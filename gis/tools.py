@@ -2,7 +2,7 @@
 
 """Otuils pour les couches vector"""
 
-import shutil
+
 from os.path import join, basename, splitext, dirname
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
@@ -287,8 +287,8 @@ def export_layer_as(layer, layer_name, layer_format, to_dir):
                                             layer_path,
                                             options
                                             )
-    QgsMessageLog.logMessage('Les fichiers GeoJSON sont bien enregistrés dans {}'
-                                             .format(to_dir), 'UnderMap', Qgis.Info)
+    QgsMessageLog.logMessage('Les fichiers {} sont bien enregistrés dans {}'
+                                             .format(layer_format, to_dir), 'UnderMap', Qgis.Info)
 
 
 def export_tfw(path):
@@ -364,8 +364,8 @@ def load_unloaded_data(project_path):
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
                 try:
-                    if layer_name not in get_layers_in_group('RSX'):
-                        add_layer_in_group(layer, qgis_groups.findGroup('RSX'), i_op, 'line_style.qml')
+                    if layer_name not in get_layers_in_group(PROJECT_GROUP[2]):
+                        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), i_op, 'line_style.qml')
                 except TypeError:
                     return
             else:

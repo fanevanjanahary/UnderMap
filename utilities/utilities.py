@@ -1,6 +1,6 @@
 # coding=utf-8
 import os, shutil, typing, csv
-from os.path import isfile, dirname, join, isdir, basename
+from os.path import isfile, dirname, join, isdir, basename, exists
 from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.gui import QgsMessageBar
 from UnderMap.library_extras.PyPDF2 import PdfFileWriter, PdfFileReader
@@ -227,3 +227,12 @@ def residual_list(gcp_file):
                 return residual
     return list(map(float, residual[1:]))
 
+
+def delete_unused_folder(project_path):
+
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    for i_op, item in enumerate(operators_content):
+            path_to_delete = join(operators_path, item, 'SHP_')
+            if exists(path_to_delete):
+                shutil.rmtree(path_to_delete, ignore_errors=True)

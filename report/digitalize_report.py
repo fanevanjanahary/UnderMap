@@ -2,8 +2,11 @@
 
 from os import rename, rmdir
 from os.path import join, exists
-from qgis.core import QgsVectorLayer, QgsProject
-from UnderMap.gis.tools import length_feature
+from UnderMap.gis.tools import (
+    length_feature,
+    get_number_element_rsx_layers,
+    get_layers_from_folder
+)
 from UnderMap.definition.definitions import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
@@ -181,23 +184,6 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
     return last_row
 
 
-def get_position_operators(operators_path, operators_content):
-
-    positions = [0]
-    value = 0
-    for i, item in enumerate(operators_content):
-        layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
-        layer = QgsVectorLayer(layer_path+".shp")
-        field = layer.dataProvider().fieldNameIndex('Reseau')
-        values = sorted(layer.uniqueValues(field))
-        if len(values) > 0 :
-            value += len(values)-1
-            positions.append(value)
-        else:
-            value += len(values)
-            positions.append(value)
-    return positions
-
 
 def georeference_report(path, operator_name, row, worksheet, header_format, workbook):
 
@@ -299,13 +285,12 @@ def export_report_file(workbook, path):
     cell_rsx_format.set_text_wrap()
 
 
-    position = get_position_operators(operators_path, operators_content)
+    position = get_number_element_rsx_layers(operators_path, operators_content)
 
     for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
         worksheet = workbook.add_worksheet(item_worksheet)
-        for i_op, item in enumerate(operators_content):
-            layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
-            layer = QgsVectorLayer(layer_path+".shp")
+        for i_op, layer in enumerate(get_layers_from_folder('SHP')):
+            item = layer.name()
             field = layer.dataProvider().fieldNameIndex('Reseau')
             values = sorted(layer.uniqueValues(field))
 

@@ -28,7 +28,8 @@ from UnderMap.gis.tools import (
     get_group,
     load_unloaded_data,
     export_layer_as,
-    merge_features_connected
+    merge_features_connected,
+    get_layers_from_folder
     )
 
 
@@ -170,32 +171,13 @@ def merge_features_connected_layers(project_path):
                 merge_features_connected(layer, shp_file)
 
 
-def get_layers_merged():
-
-    layers = []
-    project_path = get_project_path()
-    operators_path = join(project_path, PROJECT_GROUP[2])
-    operators_content = get_elements_name(operators_path, True, None)
-    for i_op, item in enumerate(operators_content):
-        shp_path = join(operators_path, item, 'SHP_')
-        if exists(shp_path):
-            for shp_file in glob.glob(join(shp_path, '*.shp')):
-                layer_name = basename(shp_file).replace(".shp", "")
-                layer = QgsVectorLayer(shp_file, layer_name, "ogr")
-                layer.setCrs(QgsProject.instance().crs())
-                layers.append(layer)
-        else:
-            return None
-    return layers
-
-
 def overwrite_layers_merged(project_path):
 
     root = QgsProject.instance().layerTreeRoot()
     group = root.findGroup(PROJECT_GROUP[2])
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
-    layers = get_layers_merged()
+    layers = get_layers_from_folder('SHP_')
     if layers is not None:
         for i_op, item in enumerate(operators_content):
             # load vectors
@@ -224,8 +206,8 @@ def export_xlsx_report_for_customer(path):
     :return: l'état de géneration
     :rtype: Boolean
     """
-    name_file = QgsProject.instance().baseName()
-    file = join(path, name_file+'_1.xlsx')
+    name_file = "Tableaux_de_synthèse"
+    file = join(path, name_file+'.xlsx')
     workbook = xlsxwriter.Workbook(file)
 
     try:

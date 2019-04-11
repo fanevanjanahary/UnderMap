@@ -3,7 +3,7 @@
 """Otuils pour les couches vector"""
 
 
-from os.path import join, basename, splitext, dirname
+from os.path import join, basename, splitext, dirname, exists
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -19,6 +19,7 @@ from qgis.core import (
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     QML_PATH,
+    OPERATOR_SUB_DIR,
     create_dir,
     get_project_path,
     groups_to_array,
@@ -524,3 +525,66 @@ def merge_features_connected(layer, path):
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
         """
+
+def get_number_element_rsx_layers(operators_path, operators_content):
+
+    n_elements_rsx = [0]
+    value = 0
+    for i, item in enumerate(operators_content):
+        layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
+        layer = QgsVectorLayer(layer_path+".shp")
+        field = layer.dataProvider().fieldNameIndex('Reseau')
+        values = sorted(layer.uniqueValues(field))
+        if len(values) > 0 :
+            value += len(values)-1
+            n_elements_rsx.append(value)
+        else:
+            value += len(values)
+            n_elements_rsx.append(value)
+    return n_elements_rsx
+
+
+def get_features_by_rsx_and_class(layer):
+
+    alg_params_calculator = {
+        'FIELD_LENGTH': 20,
+        'FIELD_NAME': 'resume',
+        'FIELD_PRECISION': 0,
+        'FIELD_TYPE': 2,
+        'FORMULA': ' \"Reseau\" || \'_\'  || \"Classe\"',
+        'INPUT': layer,
+        'NEW_FIELD': True,
+        'OUTPUT': 'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('qgis:fieldcalculator', alg_params_calculator)
+    layer = result['OUTPUT']
+    field = layer.dataProvider().fieldNameIndex('resume')
+
+    return layer.uniqueValues(field)
+
+
+def get_layers_from_folder(folder):
+    """ Convert les fichies shp en QgsVectorLayer
+
+    :param folder: dossier où se trouve le fichier à convertir
+    :type folder: str
+
+    :return: liste de QgsVectorLayer
+    :rtype: list
+    """
+
+    layers = []
+    project_path = get_project_path()
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    for i_op, item in enumerate(operators_content):
+        shp_path = join(operators_path, item, folder)
+        if exists(shp_path):
+            for shp_file in glob.glob(join(shp_path, '*.shp')):
+                layer_name = basename(shp_file).replace(".shp", "")
+                layer = QgsVectorLayer(shp_file, layer_name, "ogr")
+                layer.setCrs(QgsProject.instance().crs())
+                layers.append(layer)
+        else:
+            return None
+    return layers

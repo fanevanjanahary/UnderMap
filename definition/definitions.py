@@ -64,3 +64,11 @@ extension = {
     'ESRI Shapefile' : '.shp',
     'GeoJSON' : '.geojson'
 }
+
+buffer_synth = {
+        "Longueurs concernées" : "#ffffcc",
+        "BE" : "#dce6f1",
+        "RP" : "#00b0f0",
+        "Résultats" : "#ffa893"
+
+}

@@ -551,7 +551,7 @@ def get_features_by_rsx_and_class(layer):
         'FIELD_NAME': 'resume',
         'FIELD_PRECISION': 0,
         'FIELD_TYPE': 2,
-        'FORMULA': ' \"Reseau\" || \'_\'  || \"Classe\"',
+        'FORMULA': ' \"Exploitant\" || \'_\' || \"Reseau\" || \'_\'  || \"Classe\"',
         'INPUT': layer,
         'NEW_FIELD': True,
         'OUTPUT': 'TEMPORARY_OUTPUT'

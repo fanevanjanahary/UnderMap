@@ -583,7 +583,6 @@ def get_layers_from_folder(folder):
             for shp_file in glob.glob(join(shp_path, '*.shp')):
                 layer_name = basename(shp_file).replace(".shp", "")
                 layer = QgsVectorLayer(shp_file, layer_name, "ogr")
-                layer.setCrs(QgsProject.instance().crs())
                 layers.append(layer)
         else:
             return None

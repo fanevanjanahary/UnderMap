@@ -248,12 +248,12 @@ def import_points(files, crs):
     point_layer = QgsVectorLayer(result['native:reprojectlayer_1:Points transformés'], layer_name, "ogr")
     points = qgis_groups.findGroup('POINTS CALAGE')
     if points is not None:
-        add_layer_in_group(point_layer, points, "point_style.qml")
+        add_layer_in_group(point_layer, points, 0, "point_style.qml")
     else:
         rsx = qgis_groups.findGroup('Reseaux')
         rsx.insertGroup(1, "POINTS CALAGE")
         points = qgis_groups.findGroup('POINTS CALAGE')
-        add_layer_in_group(point_layer, points, "point_style.qml")
+        add_layer_in_group(point_layer, points, 0, "point_style.qml")
 
 
 def export_layer_as(layer, layer_name, layer_format, to_dir):

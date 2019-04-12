@@ -44,8 +44,13 @@ def create_head_content(worksheet, workbook):
     worksheet.merge_range('M5:S8', '- COLL IMM - Ilot Nord -Avenue de la Quantiniere TRELAZE ',
                           customize_cell_format(1, 1, '#FFC090', workbook)
                           )
+    """
     worksheet.merge_range('A7:B7', "Unité selon l'INSEE", customize_cell_format(1, 1, '#BFBFBF', workbook))
-    worksheet.merge_range('C7:L7', '=IF($I$1="URBAINE", "URBAINE", "NON URBAINE")")',
+    worksheet.write_array_formula(6, 2, 6, 12, '{=IF($I$1="URBAINE", "URBAINE", "NON URBAINE")")}',
+                          customize_cell_format(1, 1, '#BFBFBF', workbook)
+                          )
+    """
+    worksheet.write_array_formula(6, 2, 6, 12, 'aaaaa',
                           customize_cell_format(1, 1, '#BFBFBF', workbook)
                           )
     worksheet.merge_range('C8:L8', '2018112701029PBB', customize_cell_format(1, 1, '#BFBFBF', workbook))
@@ -60,12 +65,26 @@ def create_head_content(worksheet, workbook):
 
 def operators_content(worksheet):
 
+    features = []
+    cell_s = 69
+    cell_e = cell_s + 3
     for i, layer in enumerate( get_layers_from_folder('SHP') ):
-        features = get_features_by_rsx_and_class(layer)
-        for i_f, item in enumerate(features):
-            worksheet.write(8, 4 + i + i_f, layer.name())
-            worksheet.write(9, 4 + i + i_f, item.split('_')[0])
-            worksheet.write(11, 4 + i + i_f, item.split('_')[1])
+        features += [ item_f for item_f in get_features_by_rsx_and_class(layer) ]
+
+    for item_f, i in zip(features, range(0, len(features)*4, +4) ):
+
+        print('{}9:{}9'.format( chr(cell_s + i), chr(cell_e + i) ))
+        """
+        worksheet.merge_range('{}9:{}9'.format( chr(cell_s + i), chr(cell_e + i) ),
+                              item_f.split('_')[0]
+                              )
+        worksheet.merge_range('{}10:{}10'.format( chr(cell_s + i), chr(cell_e + i) ),
+                              item_f.split('_')[1]
+                              )
+        worksheet.merge_range('{}12:{}12'.format( chr(cell_s + i), chr(cell_e + i) ),
+                              item_f.split('_')[2]
+                              )
+        """
 
 def write_report(workbook):
 

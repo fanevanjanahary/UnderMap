@@ -4,9 +4,10 @@
 import os
 import glob
 from os.path import join, basename, exists, dirname
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsProject, QgsVectorLayer, QgsVectorFileWriter
 from UnderMap.library_extras import xlsxwriter
 from UnderMap.report.digitalize_report import export_report_file
+from UnderMap.report.report_for_customer import write_report
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     PDF_SUB_DIR,
@@ -15,7 +16,8 @@ from UnderMap.utilities.utilities import (
     copy_file,
     get_project_path,
     groups_to_array,
-    get_elements_name
+    get_elements_name,
+    delete_unused_folder
     )
 from UnderMap.gis.tools import (
     save_as_shp,
@@ -24,8 +26,10 @@ from UnderMap.gis.tools import (
     create_layer,
     categorized_layer,
     get_group,
+    load_unloaded_data,
     export_layer_as,
-    merge_features_connected
+    merge_features_connected,
+    get_layers_from_folder
     )
 
 
@@ -141,7 +145,7 @@ def export_xlsx_report(path):
 
 def export_as_geojson(path):
 
-    rsx_path = join(path, 'RSX')
+    rsx_path = join(path, PROJECT_GROUP[2])
 
     for root, dirs, files in os.walk(rsx_path):
         for file in files:
@@ -149,26 +153,65 @@ def export_as_geojson(path):
                 to_dir = join(root[0:-3], 'GEOJSON')
                 create_dir(to_dir, None)
                 layer = root + os.sep +file
-                export_layer_as(layer, None, "GeoJSON", ".geojson", to_dir)
+                export_layer_as(layer, None, "GeoJSON", to_dir)
     return True
 
 def merge_features_connected_layers(project_path):
 
-    root = get_group()
-    group = root.findGroup(PROJECT_GROUP[2])
-    if group is not None:
-        for child in group.children():
-            QgsProject.instance().removeMapLayer(child.layerId())
-    root.removeChildNode(group)
-    
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
+
     for i_op, item in enumerate(operators_content):
         # load vectors
         shp_path = join(operators_path, item, 'SHP')
         for shp_file in glob.glob(join(shp_path, '*.shp')):
             layer_name = basename(shp_file).replace(".shp", "")
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
-            if layer.geometryType() == 1:
-                merge_features_connected(layer, shp_file, i_op)
+            if layer.isValid() and layer.geometryType() == 1:
+                merge_features_connected(layer, shp_file)
 
+
+def overwrite_layers_merged(project_path):
+
+    root = QgsProject.instance().layerTreeRoot()
+    group = root.findGroup(PROJECT_GROUP[2])
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    layers = get_layers_from_folder('SHP_')
+    if layers is not None:
+        for i_op, item in enumerate(operators_content):
+            # load vectors
+            shp_path = join(operators_path, item, 'SHP')
+            for shp_file in glob.glob(join(shp_path, '*.shp')):
+                layer_name = basename(shp_file).replace(".shp", "")
+                if '_' not in layer_name:
+                    if group is not None:
+                        for child in group.children():
+                            QgsProject.instance().removeMapLayer(child.layerId())
+                    root.removeChildNode(group)
+                    if layers[i_op].isValid():
+                        QgsVectorFileWriter.deleteShapeFile(shp_file)
+                        export_layer_as(layers[i_op], layer_name, "ESRI Shapefile", dirname(shp_file))
+                    else:
+                        delete_unused_folder(project_path)
+        load_unloaded_data(project_path)
+    else:
+        return
+
+
+def export_xlsx_report_for_customer(path):
+    """Générer le fichier de rapport xlsx pour les clients
+
+    :param path: chemin du projet
+    :return: l'état de géneration
+    :rtype: Boolean
+    """
+    name_file = "Tableaux_de_synthèse"
+    file = join(path, name_file+'.xlsx')
+    workbook = xlsxwriter.Workbook(file)
+
+    try:
+        write_report(workbook)
+        return True
+    except PermissionError:
+        return False

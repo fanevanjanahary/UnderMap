@@ -2,8 +2,8 @@
 
 """Otuils pour les couches vector"""
 
-import shutil
-from os.path import join, basename, splitext, dirname
+
+from os.path import join, basename, splitext, dirname, exists
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRasterLayer,
     QgsVectorFileWriter, QgsField, QgsFields,
@@ -19,18 +19,20 @@ from qgis.core import (
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     QML_PATH,
+    OPERATOR_SUB_DIR,
     create_dir,
     get_project_path,
     groups_to_array,
     get_elements_name
     )
-from UnderMap.definition.fields import(
+from UnderMap.definition.definitions import(
     operator_def,
     class_def,
     diameter_def,
     rsx_def,
     abandoned_def,
-    aerial_def
+    aerial_def,
+    extension
     )
 import processing, gdal, glob
 
@@ -253,10 +255,14 @@ def import_points(files, crs):
         points = qgis_groups.findGroup('POINTS CALAGE')
         add_layer_in_group(point_layer, points, "point_style.qml")
 
-def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
+
+def export_layer_as(layer, layer_name, layer_format, to_dir):
     """Convertir un fichier sph en format donné
     :param layer: la couche
     :type layer: str ou QgsVectorLayer
+
+    :param layer_name nom du fichier en sorti
+    :type layer_name: str
 
     :param layer_format: le format final
     :type layer_format: str
@@ -272,7 +278,7 @@ def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
         else:
             layer_name = layer.name()
 
-    layer_path = join(to_dir, layer_name+'{}'.format(ext))
+    layer_path = join(to_dir, layer_name+'{}'.format(extension[layer_format]))
 
     options = QgsVectorFileWriter.SaveVectorOptions()
     options.driverName = layer_format
@@ -282,8 +288,8 @@ def export_layer_as(layer, layer_name, layer_format, ext, to_dir):
                                             layer_path,
                                             options
                                             )
-    QgsMessageLog.logMessage('Les fichiers GeoJSON sont bien enregistrés dans {}'
-                                             .format(to_dir), 'UnderMap', Qgis.Info)
+    QgsMessageLog.logMessage('Les fichiers {} sont bien enregistrés dans {}'
+                                             .format(layer_format, to_dir), 'UnderMap', Qgis.Info)
 
 
 def export_tfw(path):
@@ -359,8 +365,8 @@ def load_unloaded_data(project_path):
             layer = QgsVectorLayer(shp_file, layer_name, "ogr")
             if layer.geometryType() == 1:
                 try:
-                    if layer_name not in get_layers_in_group('RSX'):
-                        add_layer_in_group(layer, qgis_groups.findGroup('RSX'), i_op, 'line_style.qml')
+                    if layer_name not in get_layers_in_group(PROJECT_GROUP[2]):
+                        add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), i_op, 'line_style.qml')
                 except TypeError:
                     return
             else:
@@ -379,7 +385,7 @@ def load_unloaded_data(project_path):
                 add_layer_in_group(raster, qgis_groups.findGroup(item), i_tif, None)
 
 
-def merge_features_connected(layer, path, index):
+def merge_features_connected(layer, path):
     """
     Fusionner les entités qui se joignent
 
@@ -480,7 +486,7 @@ def merge_features_connected(layer, path, index):
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
     if layer.featureCount() != result['OUTPUT'].featureCount():
-        merge_features_connected( result['OUTPUT'], path, index)
+        merge_features_connected( result['OUTPUT'], path)
 
     else:
 
@@ -508,30 +514,77 @@ def merge_features_connected(layer, path, index):
         }
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
 
-        # write the shp file
-        shutil.rmtree(dirname(path), ignore_errors=True)
-        path = dirname(path)+'_'
-        create_dir(path, None)
         result['OUTPUT'].setCrs(QgsProject.instance().crs())
-        options = QgsVectorFileWriter.SaveVectorOptions()
-        options.driverName = 'ESRI Shapefile'
-        options.layerName = layer_name
-        options.fileEncoding = 'utf-8'
-        QgsVectorFileWriter.writeAsVectorFormat(result['OUTPUT'],
-                                                join(path, layer_name+'.shp'),
-                                                options
-                                                )
+        create_dir(dirname(path)+'_', None)
+        export_layer_as(layer, layer_name, "ESRI Shapefile", dirname(path)+'_')
 
         # create layer
-        layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
-        # QgsProject.instance().addMapLayer(result['OUTPUT'])
+        #layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
+        """
+        layer = QgsVectorLayer(path, layer_name, "ogr")
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
+        """
+
+def get_number_element_rsx_layers(operators_path, operators_content):
+
+    n_elements_rsx = [0]
+    value = 0
+    for i, item in enumerate(operators_content):
+        layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
+        layer = QgsVectorLayer(layer_path+".shp")
+        field = layer.dataProvider().fieldNameIndex('Reseau')
+        values = sorted(layer.uniqueValues(field))
+        if len(values) > 0 :
+            value += len(values)-1
+            n_elements_rsx.append(value)
+        else:
+            value += len(values)
+            n_elements_rsx.append(value)
+    return n_elements_rsx
 
 
+def get_features_by_rsx_and_class(layer):
 
-def delete_data_source(file_path):
-    from osgeo import gdal, ogr
-    # delete shp file
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    driver.DeleteDataSource(file_path)
+    alg_params_calculator = {
+        'FIELD_LENGTH': 20,
+        'FIELD_NAME': 'resume',
+        'FIELD_PRECISION': 0,
+        'FIELD_TYPE': 2,
+        'FORMULA': ' \"Reseau\" || \'_\'  || \"Classe\"',
+        'INPUT': layer,
+        'NEW_FIELD': True,
+        'OUTPUT': 'TEMPORARY_OUTPUT'
+    }
+    result = processing.run('qgis:fieldcalculator', alg_params_calculator)
+    layer = result['OUTPUT']
+    field = layer.dataProvider().fieldNameIndex('resume')
+
+    return layer.uniqueValues(field)
+
+
+def get_layers_from_folder(folder):
+    """ Convert les fichies shp en QgsVectorLayer
+
+    :param folder: dossier où se trouve le fichier à convertir
+    :type folder: str
+
+    :return: liste de QgsVectorLayer
+    :rtype: list
+    """
+
+    layers = []
+    project_path = get_project_path()
+    operators_path = join(project_path, PROJECT_GROUP[2])
+    operators_content = get_elements_name(operators_path, True, None)
+    for i_op, item in enumerate(operators_content):
+        shp_path = join(operators_path, item, folder)
+        if exists(shp_path):
+            for shp_file in glob.glob(join(shp_path, '*.shp')):
+                layer_name = basename(shp_file).replace(".shp", "")
+                layer = QgsVectorLayer(shp_file, layer_name, "ogr")
+                layer.setCrs(QgsProject.instance().crs())
+                layers.append(layer)
+        else:
+            return None
+    return layers

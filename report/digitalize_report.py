@@ -2,9 +2,12 @@
 
 from os import rename, rmdir
 from os.path import join, exists
-from qgis.core import QgsVectorLayer, QgsProject
-from UnderMap.gis.tools import length_feature
-from UnderMap.definition.fields import rsx_color
+from UnderMap.gis.tools import (
+    length_feature,
+    get_number_element_rsx_layers,
+    get_layers_from_folder
+)
+from UnderMap.definition.definitions import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
     get_elements_name,
@@ -21,6 +24,22 @@ from UnderMap.utilities.utilities import (
 ECART = ['Moyen', 'Max']
 
 def customize_cell_format(top, bottom, color, workbook):
+    """ changer le style d'une cellule
+
+    :param top: Bordure haut
+    :type top: int
+
+    :param bottom: Bordure bas
+    :type bottom: int
+
+    :param color: couleur background
+    :type color: str
+
+    :param workbook: Le fichier à écrire
+    :type workbook: Workbook
+
+    :return:
+    """
     cell_format = workbook.add_format({
         'bold': 1,
         'border': 1,
@@ -45,9 +64,9 @@ def create_head_content(worksheet, title, header_format, cell, workbook):
 
     worksheet.set_column('A:A', 25)
     worksheet.insert_image('A1', logo)
-    worksheet.set_column('{}:{}'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), 40)
+    worksheet.set_column('{0}:{0}'.format(chr(cell_to_nbr + 12)), 40)
     worksheet.merge_range('{}6:{}6'.format(cell, chr(cell_to_nbr + 11)), head[0], header_format)
-    worksheet.merge_range('{}6:{}8'.format(chr(cell_to_nbr + 12), chr(cell_to_nbr + 12)), head[4], header_format)
+    worksheet.merge_range('{0}6:{0}8'.format(chr(cell_to_nbr + 12)), head[4], header_format)
     worksheet.merge_range('B2:{}2'.format(chr(cell_to_nbr + 11)), 'UnderMap',
                           customize_cell_format(1, 0, '#bebebe', workbook))
 
@@ -165,31 +184,14 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
     return last_row
 
 
-def get_position_operators(operators_path, operators_content):
-
-    positions = [0]
-    value = 0
-    for i, item in enumerate(operators_content):
-        layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
-        layer = QgsVectorLayer(layer_path+".shp")
-        field = layer.dataProvider().fieldNameIndex('Reseau')
-        values = sorted(layer.uniqueValues(field))
-        if len(values) > 0 :
-            value += len(values)-1
-            positions.append(value)
-        else:
-            value += len(values)
-            positions.append(value)
-    return positions
-
 
 def georeference_report(path, operator_name, row, worksheet, header_format, workbook):
 
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
     worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methode de calage', header_format)
-    worksheet.merge_range('E{}:F{}'.format(row, row), 'Ecart (m)', header_format)
-    worksheet.merge_range('G{}:H{}'.format(row, row), 'Ecart (pix)', header_format)
+    worksheet.merge_range('E{0}:F{0}'.format(row), 'Ecart (m)', header_format)
+    worksheet.merge_range('G{0}:H{0}'.format(row), 'Ecart (pix)', header_format)
     worksheet.merge_range('I{}:K{}'.format(row, row + 1), 'Remarques', header_format)
     worksheet.merge_range('M{}:O{}'.format(row, row + 1), 'Alertes', header_format)
     ecart_cell = 0
@@ -242,14 +244,16 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
                                     customize_cell_format(None, None, "red", workbook))
                 else:
                     worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
-                worksheet.merge_range('C{}:D{}'.format(row + 2 + len(pdf_in_tif), row + 2 + len(pdf_in_tif)),
-                                      'Moyenne', header_format)
+                worksheet.merge_range('C{0}:D{0}'.format(row + 2 + len(pdf_in_tif)),
+                                      'Moyenne',
+                                      header_format
+                                      )
                 for i_cell_mean, cell_mean in enumerate(['E','F']):
-                    worksheet.write_formula(row + 1+ len(pdf_in_tif), 4+ i_cell_mean,
-                                            '=AVERAGE({}{}:{}{})'.format(cell_mean, row + 2
-
-                                                                         , cell_mean,
-                                                                         row+ 1+ len(pdf_in_tif)),
+                    worksheet.write_formula(row + 1+ len(pdf_in_tif),
+                                            4+ i_cell_mean,
+                                            '=AVERAGE({0}{1}:{0}{2})'.format(cell_mean,
+                                                                           row + 2,
+                                                                           row+ 1+ len(pdf_in_tif)),
                                             )
             else:
                 return
@@ -281,13 +285,12 @@ def export_report_file(workbook, path):
     cell_rsx_format.set_text_wrap()
 
 
-    position = get_position_operators(operators_path, operators_content)
+    position = get_number_element_rsx_layers(operators_path, operators_content)
 
     for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
         worksheet = workbook.add_worksheet(item_worksheet)
-        for i_op, item in enumerate(operators_content):
-            layer_path = join(operators_path, item, OPERATOR_SUB_DIR[1], item)
-            layer = QgsVectorLayer(layer_path+".shp")
+        for i_op, layer in enumerate(get_layers_from_folder('SHP')):
+            item = layer.name()
             field = layer.dataProvider().fieldNameIndex('Reseau')
             values = sorted(layer.uniqueValues(field))
 

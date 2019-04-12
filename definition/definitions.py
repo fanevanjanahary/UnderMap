@@ -1,6 +1,6 @@
 # coding=utf-8
 
-"""Définition des attributs"""
+""" Tous les définitions """
 
 
 from qgis.PyQt.QtCore import QVariant
@@ -58,4 +58,9 @@ rsx_color = {
     'SIG': '#BFBFBF',
     'MR': '#FFCCFF',
 
+}
+
+extension = {
+    'ESRI Shapefile' : '.shp',
+    'GeoJSON' : '.geojson'
 }

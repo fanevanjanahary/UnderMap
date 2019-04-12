@@ -24,7 +24,6 @@
 
 import os, logging
 from os.path import dirname, join, exists
-
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QToolButton, QMenu, QFileDialog, QMessageBox
@@ -38,13 +37,15 @@ from .ui.add_operator_dialog import AjouterOperateurDialog
 from .ui.manage_pdf_dialog import DialogAddPDF, DialogSplitPDF
 from .ui.import_points_dialog import DialogImportPoint
 from .ui.zoom_to_feature_dialog import DialogZoomToFeature
-from .utilities.utilities import get_project_path
+from .utilities.utilities import get_project_path, delete_unused_folder
 from UnderMap.process import (
     initialise_pdf,
     initialise_fdp,
     initialise_emprise,
     export_xlsx_report,
-    export_as_geojson
+    export_as_geojson,
+    merge_features_connected_layers,
+    overwrite_layers_merged
     )
 from UnderMap.gis.tools import (
     get_layers_in_group,
@@ -113,6 +114,7 @@ class UnderMap:
         self.addPDFAction = None
         self.splitPDFAction = None
         self.importPointsAction = None
+        self.mergeFeaturesAction = None
         self.manageBufferAction = None
         self.saveAsGeoJsonAndTfwAction = None
         self.controlAction = None
@@ -184,6 +186,11 @@ class UnderMap:
             'Importer les points de calage',
             self.iface.mainWindow())
 
+        self.mergeFeaturesAction = QAction(
+            QIcon(join(dirname(__file__), 'resources', '')),
+            'Fusionner les entités',
+            self.iface.mainWindow())
+
         self.manageBufferAction = QAction(
             QIcon(join(dirname(__file__), 'resources', '')),
             'Génerer les buffers',
@@ -213,6 +220,7 @@ class UnderMap:
         self.addPDFAction.triggered.connect(self.add_pdf)
         self.splitPDFAction.triggered.connect(self.split_pdf)
         self.importPointsAction.triggered.connect(self.import_points)
+        self.mergeFeaturesAction.triggered.connect(self.merge_features_layer)
         self.manageBufferAction.triggered.connect(self.manage_buffer)
         self.saveAsGeoJsonAndTfwAction.triggered.connect(self.save_geojson_tfw)
         self.controlAction.triggered.connect(self.control)
@@ -229,6 +237,7 @@ class UnderMap:
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
         self.init_button.menu().addAction(self.splitPDFAction)
+        self.init_button.menu().addAction(self.mergeFeaturesAction)
         self.init_button.menu().addAction(self.manageBufferAction)
         self.init_button.menu().addAction(self.saveAsGeoJsonAndTfwAction)
 
@@ -377,8 +386,23 @@ class UnderMap:
                  if export_tfw(project_path):
                     self.iface.messageBar().pushInfo('Undermap', "l'export de GeoJSON et les fichiers"
                                                                  " tfw est bien reussi"
+                                                     )
+            delete_unused_folder(project_path)
 
-                                                            )
+    def merge_features_layer(self):
+
+        from matplotlib import pyplot as plt
+        project_path = get_project_path()
+        if project_path == './':
+            QMessageBox.warning(None, "Avertisment", "Veuillez ouvrir un projet qgis")
+            return
+        else:
+            merge_features_connected_layers(project_path)
+            plt.pause(5)
+            overwrite_layers_merged(project_path)
+            delete_unused_folder(project_path)
+
+
     def load_layer(self):
         project_path = get_project_path()
         load_unloaded_data(project_path)

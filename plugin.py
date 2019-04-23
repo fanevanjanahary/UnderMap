@@ -226,21 +226,19 @@ class UnderMap:
         self.controlAction.triggered.connect(self.control)
         self.zoomToAction.triggered.connect(self.zoom_to_feature)
 
-
-
         # add actions on menu
         self.init_button.menu().addAction(self.initialisePDFAction)
         self.init_button.menu().addAction(self.addOperatorAction)
         self.init_button.setDefaultAction(self.initialisePDFAction)
         # add separator
-        #self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
+
+        # self.initialiseFDPAction.insertSeparator(self.initialisePDFAction)
         self.init_button.menu().addAction(self.initialiseFDPAction)
         self.init_button.menu().addAction(self.initialiseEmpriseAction)
         self.init_button.menu().addAction(self.splitPDFAction)
         self.init_button.menu().addAction(self.mergeFeaturesAction)
         self.init_button.menu().addAction(self.manageBufferAction)
         self.init_button.menu().addAction(self.saveAsGeoJsonAndTfwAction)
-
 
         # add actions and menu in toolbar
         self.toolbar.addWidget(self.init_button)
@@ -249,7 +247,6 @@ class UnderMap:
         self.toolbar.addAction(self.importPointsAction)
         self.toolbar.addAction(self.controlAction)
         self.toolbar.addAction(self.zoomToAction)
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -293,18 +290,14 @@ class UnderMap:
     def add_operator(self):
         self.addop.exec_()
 
-
     def add_pdf(self):
         self.addpdf.exec_()
-
 
     def split_pdf(self):
         self.splitpdf.exec_()
 
-
     def import_points(self):
         self.importpoints.exec_()
-
 
     def zoom_to_feature(self):
         self.zoomto.exec_()
@@ -314,6 +307,7 @@ class UnderMap:
         manage_buffer(project_path)
         self.iface.messageBar().pushInfo('Undermap', "La génération des buffers a bien reussi."
                                                             )
+
     def control(self):
 
         transparency_raster()
@@ -356,7 +350,6 @@ class UnderMap:
                 return
             else:
                 initialise_emprise(fileSelected)
-
 
     def export_report(self):
         project_path = get_project_path()
@@ -401,7 +394,6 @@ class UnderMap:
             plt.pause(5)
             overwrite_layers_merged(project_path)
             delete_unused_folder(project_path)
-
 
     def load_layer(self):
         project_path = get_project_path()

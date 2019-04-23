@@ -93,7 +93,6 @@ def create_dir(dir_path, dir_name):
         os.makedirs(new_dir)
 
 
-
 def get_elements_name(path, type, ext):
     """ Mettre dans une liste le nom de tous les éléments dans une racine donnée
 
@@ -102,6 +101,9 @@ def get_elements_name(path, type, ext):
 
     :param type: True si c'est un dossier, False si c'est un fichier
     :type type: bool
+
+    :param ext: extencions si on veux avoir la liste de fichier
+    :type ext:str
 
     :return: Liste de dossier
     :rtype: list
@@ -150,8 +152,7 @@ def split_pdf(pdf_file, to_dir):
         try:
             pages_no = input_pdf.numPages
         except AttributeError:
-                        QgsMessageBar.pushCritical('Undermap',
-                                                             "Y a une erreur lors de découpage"
+            QgsMessageBar.pushCritical('Undermap', "Y a une erreur lors de découpage"
                                                             "du fichier:{}".format(pdf_file))
         if pages_no > 1:
             for i in range(pages_no):
@@ -190,6 +191,7 @@ def count_pdf_file(dir_name):
         nbr_file.append(nbr)
 
     return nbr_file
+
 
 def count_csv_line(csv_file):
     """ Compter le nombre de line dans un fichier csv
@@ -233,6 +235,6 @@ def delete_unused_folder(project_path):
     operators_path = join(project_path, PROJECT_GROUP[2])
     operators_content = get_elements_name(operators_path, True, None)
     for i_op, item in enumerate(operators_content):
-            path_to_delete = join(operators_path, item, 'SHP_')
-            if exists(path_to_delete):
-                shutil.rmtree(path_to_delete, ignore_errors=True)
+        path_to_delete = join(operators_path, item, 'SHP_')
+        if exists(path_to_delete):
+            shutil.rmtree(path_to_delete, ignore_errors=True)

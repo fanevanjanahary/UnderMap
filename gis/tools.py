@@ -11,9 +11,7 @@ from qgis.core import (
     QgsSymbol, QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
     QgsFeatureRequest, QgsApplication,
-    QgsProcessingContext, QgsProcessingFeedback,
     QgsCoordinateReferenceSystem, Qgis, QgsMessageLog,
-    QgsProcessingMultiStepFeedback
     )
 
 from UnderMap.utilities.utilities import (
@@ -186,6 +184,7 @@ def length_feature(layer, rsx, cls, abd):
     except AttributeError:
         return sum
 
+
 def get_group():
     """  Retourne un groupe d'un projet QGIS
 
@@ -208,6 +207,7 @@ def get_layers_in_group(group_name):
         return [child.name() for child in group.children()]
     except AttributeError:
         return []
+
 
 def manage_buffer(path):
 
@@ -288,8 +288,8 @@ def export_layer_as(layer, layer_name, layer_format, to_dir):
                                             layer_path,
                                             options
                                             )
-    QgsMessageLog.logMessage('Les fichiers {} sont bien enregistrés dans {}'
-                                             .format(layer_format, to_dir), 'UnderMap', Qgis.Info)
+    QgsMessageLog.logMessage("Les fichiers {} sont bien enregistrés dans {}"
+                             .format(layer_format, to_dir), 'UnderMap', Qgis.Info)
 
 
 def export_tfw(path):
@@ -314,15 +314,12 @@ def export_tfw(path):
             tfw.write("%0.8f\n" % edit1)
             tfw.write("%0.8f\n" % edit2)
             tfw.close()
-        QgsMessageLog.logMessage('Le(s) fichier(s) tfw sont bien enregistré(s) dans {}'
+        QgsMessageLog.logMessage("Le(s) fichier(s) tfw sont bien enregistré(s) dans {}"
                                              .format(tif_path), 'UnderMap', Qgis.Info)
 
 
 def transparency_raster():
     """ Pour changer la transparence des rater dans sur qgis
-
-    :param percent: la valeur de pourcentage
-    :type percent: int
 
     """
     tif_children = get_layers_in_group('TIF')
@@ -376,7 +373,7 @@ def load_unloaded_data(project_path):
                 except TypeError:
                     return
 
-        #load raster
+        # load raster
         tif_path = join(operators_path, item, 'TIF')
         for i_tif, tif_file in enumerate(glob.glob(join(tif_path, '*.tif'))):
             raster_name = basename(tif_file).replace(".tif", "")
@@ -395,8 +392,6 @@ def merge_features_connected(layer, path):
     :param path: le chemin pour enregistre
     :type path: str
 
-    :param index: position dans qgis
-    :type index: int
     """
 
     layer_name = basename(path).replace(".shp", "")
@@ -470,23 +465,23 @@ def merge_features_connected(layer, path):
                             layer.commitChanges()
 
     # Dissolve parameters
-    alg_params_dissolve =  {
-        'INPUT':layer,
-        'FIELD':['resume'],
-        'OUTPUT':'TEMPORARY_OUTPUT'
+    alg_params_dissolve = {
+        'INPUT': layer,
+        'FIELD': ['resume'],
+        'OUTPUT': 'TEMPORARY_OUTPUT'
     }
     result = processing.run('native:dissolve', alg_params_dissolve)
 
     # Drop Field parameters
     alg_params_deletecolumn = {
-        'INPUT':result['OUTPUT'],
-        'COLUMN':['resume'],
-        'OUTPUT':'TEMPORARY_OUTPUT'
+        'INPUT': result['OUTPUT'],
+        'COLUMN': ['resume'],
+        'OUTPUT': 'TEMPORARY_OUTPUT'
     }
     result = processing.run('qgis:deletecolumn', alg_params_deletecolumn)
 
     if layer.featureCount() != result['OUTPUT'].featureCount():
-        merge_features_connected( result['OUTPUT'], path)
+        merge_features_connected(result['OUTPUT'], path)
 
     else:
 
@@ -509,8 +504,8 @@ def merge_features_connected(layer, path):
         # convert geometry type parameters
         alg_params_convert_geometry_type = {
             'INPUT': layer,
-            'TYPE':2,
-            'OUTPUT':'TEMPORARY_OUTPUT'
+            'TYPE': 2,
+            'OUTPUT': 'TEMPORARY_OUTPUT'
         }
         result = processing.run('qgis:convertgeometrytype', alg_params_convert_geometry_type)
 
@@ -519,12 +514,13 @@ def merge_features_connected(layer, path):
         export_layer_as(layer, layer_name, "ESRI Shapefile", dirname(path)+'_')
 
         # create layer
-        #layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
+        # layer = QgsVectorLayer(join(path, layer_name+'.shp'), layer_name, "ogr")
         """
         layer = QgsVectorLayer(path, layer_name, "ogr")
         qgis_groups = get_group()
         add_layer_in_group(layer, qgis_groups.findGroup(PROJECT_GROUP[2]), index , 'line_style.qml')
         """
+
 
 def get_number_element_rsx_layers(operators_path, operators_content):
 
@@ -535,7 +531,7 @@ def get_number_element_rsx_layers(operators_path, operators_content):
         layer = QgsVectorLayer(layer_path+".shp")
         field = layer.dataProvider().fieldNameIndex('Reseau')
         values = sorted(layer.uniqueValues(field))
-        if len(values) > 0 :
+        if len(values) > 0:
             value += len(values)-1
             n_elements_rsx.append(value)
         else:

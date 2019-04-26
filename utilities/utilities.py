@@ -10,6 +10,7 @@ OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF', 'POINTS CALAGE']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
 LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')
+LAYERS_PATH = dirname(__file__).replace('utilities', 'resources/layers')
 PDF_SUB_DIR = ['PAGES A TRAITER', 'PAGES ANNEXES']
 WORKSHEETS = ['Synthèse_exploitants', 'Synthèse_réseaux']
 

@@ -17,7 +17,7 @@
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.   23                                *
+ *   (at your option) any later version.                                *
  *                                                                         *
  ***************************************************************************/
 """
@@ -324,6 +324,7 @@ class UnderMap:
                 return
             else:
                 initialise_pdf(dir_selected)
+                QgsProject.instance().write()
 
     def initialise_FDP(self):
         project_path = get_project_path()
@@ -344,9 +345,10 @@ class UnderMap:
             QMessageBox.warning(None, "Avertissement", "Veuillez ouvrir un projet QGIS et l’enregistrer")
             return
         else:
-            fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, "*.kml")
+            filter = "DXF(*.dxf);;KML(*.kml);;SHAPE(*.shp)"
+            fileSelected = QFileDialog.getOpenFileName(None, "Sélectionnez un fichier", project_path, filter)
             if fileSelected == ('', ''):
-                self.iface.messageBar().pushWarning('Undermap', "Aucun fichier kml séléctionné")
+                self.iface.messageBar().pushWarning('Undermap', "Aucun fichier séléctionné")
                 return
             else:
                 initialise_emprise(fileSelected)

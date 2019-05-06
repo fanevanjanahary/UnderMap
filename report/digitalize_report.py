@@ -12,7 +12,6 @@ from UnderMap.utilities.utilities import (
     get_project_path,
     get_elements_name,
     count_pdf_file,
-    count_csv_line,
     residual_list,
     LOGO_PATH,
     WORKSHEETS,
@@ -204,64 +203,66 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
     operator_path = join(path, PROJECT_GROUP[2], operator_name)
     tif_path = join(operator_path, PROJECT_GROUP[3])
     tif_el = get_elements_name(tif_path, False, '.tif')
-    list_tif_replaced = [x.replace("_georef.tif", ".pdf") for x in tif_el]
+    list_tif_replaced = [x.replace("_georef.tif", ".tif") for x in tif_el]
     points = get_elements_name(tif_path, False, '.points')
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
-    pdf_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
+    files_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
+
     try:
-        pdf_el = get_elements_name(pdf_path_to_treat, False, '.pdf')
+        files_to_treat = get_elements_name(files_path_to_treat, False, '')
     except FileNotFoundError:
-        rename(join(pdf_root, 'A-TRAITER'), pdf_path_to_treat)
-        pdf_el = get_elements_name(pdf_path_to_treat, False, '.pdf')
+        rename(join(pdf_root, 'A-TRAITER'), files_path_to_treat)
+        files_to_treat = get_elements_name(files_path_to_treat, False, '')
         if exists(join(pdf_root, 'UTILE')):
             rename(join(pdf_root, 'UTILE'), join(pdf_root, PDF_SUB_DIR[1]))
         if exists(join(pdf_root, 'IGNORE')):
             rmdir(join(pdf_root, 'IGNORE'))
 
-    pdf_in_tif = [item for item in pdf_el if item in list_tif_replaced]
-    pdf_not_in_tif = [item for item in pdf_el if item not in list_tif_replaced]
-    last_row_alerte = len(pdf_not_in_tif)
-    for i_pdf_treated, item_pdf_treated in enumerate(pdf_in_tif):
-        gcp_file_name = item_pdf_treated.replace('.pdf', '_georef.tif.points')
+    files_in_tif_path = [item for item in files_to_treat if item in list_tif_replaced]
+    files_not_in_tif = [item for item in files_to_treat if item not in list_tif_replaced]
+    last_row_alerte = len(files_not_in_tif)
+    for i_file_treated, item_file_treated in enumerate(files_in_tif_path):
+        gcp_file_name = item_file_treated.rsplit(".", 1)[0]+'_georef.tif.points'
+        print(gcp_file_name)
         if gcp_file_name in points:
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
-            if count_csv_line(gcp_file) - 1 < 6:
-                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated,
+            if len(residual_list(gcp_file)) < 6:
+                worksheet.write(row + 1 + i_file_treated, 0, item_file_treated,
                                 customize_cell_format(None, None, "red", workbook))
                 worksheet.write(row + 1 + last_row_alerte, 12, "GEOREF : NOMBRE DE POINTS INSUFFISANT",
                                 customize_cell_format(None, None, "red", workbook))
                 last_row_alerte +=1
             else:
-                worksheet.write(row + 1 + i_pdf_treated, 0, item_pdf_treated)
+                worksheet.write(row + 1 + i_file_treated, 0, item_file_treated)
 
-            if len(list_of_residual) > 0 :
-                worksheet.write(row + 1 + i_pdf_treated, 1, count_csv_line(gcp_file) - 1)
-                worksheet.write(row + 1 + i_pdf_treated, 4, round(
+            if len(list_of_residual) > 0:
+                worksheet.write(row + 1 + i_file_treated, 1, len(residual_list(gcp_file)))
+                worksheet.write(row + 1 + i_file_treated, 4, round(
                     sum(list_of_residual)/len(list_of_residual), 2))
                 if max(list_of_residual) > 1:
-                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2),
+                    worksheet.write(row + 1 + i_file_treated, 5, round(max(list_of_residual), 2),
                                     customize_cell_format(None, None, "red", workbook))
                 else:
-                    worksheet.write(row + 1 + i_pdf_treated, 5, round(max(list_of_residual), 2))
-                worksheet.merge_range('C{0}:D{0}'.format(row + 2 + len(pdf_in_tif)),
+                    worksheet.write(row + 1 + i_file_treated, 5, round(max(list_of_residual), 2))
+                worksheet.merge_range('C{0}:D{0}'.format(row + 2 + len(files_in_tif_path)),
                                       'Moyenne',
                                       header_format
                                       )
                 for i_cell_mean, cell_mean in enumerate(['E','F']):
-                    worksheet.write_formula(row + 1+ len(pdf_in_tif),
+                    worksheet.write_formula(row + 1+ len(files_in_tif_path),
                                             4+ i_cell_mean,
                                             '=AVERAGE({0}{1}:{0}{2})'.format(cell_mean,
                                                                            row + 2,
-                                                                           row+ 1+ len(pdf_in_tif)),
+                                                                           row+ 1+ len(files_in_tif_path)),
                                             )
             else:
                 return
         else:
            return
-    if len(pdf_not_in_tif) > 0:
+    if len(files_not_in_tif) > 0:
         worksheet.write(row + 1 , 12, "CERTAINS PDF N’ONT PAS ETE GEOREFERENCES ")
-        for i_pdf_not_treated, item_pdf_not_treated in enumerate(pdf_not_in_tif):
+        for i_pdf_not_treated, item_pdf_not_treated in enumerate(files_not_in_tif):
             worksheet.write(row + 1 + i_pdf_not_treated, 13, item_pdf_not_treated)
 
 def export_report_file(workbook, path):
@@ -326,7 +327,7 @@ def export_report_file(workbook, path):
                 )
                 georeference_report(path, item, last_row + 2, worksheet_rsx, cell_header, workbook)
 
-        if i_worksheet ==  1:
+        if i_worksheet == 1:
             create_content(worksheet, 'Synthèse par réseau', cell_header,
                            workbook, 8, 'B', rsx_color, None)
 

@@ -29,8 +29,7 @@ from UnderMap.gis.tools import (
     load_unloaded_data,
     export_layer_as,
     merge_features_connected,
-    get_layers_from_folder,
-    create_group_fond
+    get_layers_from_folder
     )
 
 
@@ -44,7 +43,7 @@ def initialise_pdf(from_operators):
     for i_op, item in enumerate(get_elements_name(from_operators, True, None)):
         operator_dir = join(from_operators, item)
         create_operator(item, operator_dir, i_op)
-    create_group_fond()
+
 
 def create_operator(name, pdf, index):
     """ Creation d'un opeérateur

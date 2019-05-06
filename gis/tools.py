@@ -17,7 +17,6 @@ from qgis.core import (
 from UnderMap.utilities.utilities import (
     PROJECT_GROUP,
     QML_PATH,
-    LAYERS_PATH,
     OPERATOR_SUB_DIR,
     create_dir,
     get_project_path,
@@ -97,13 +96,6 @@ def create_group():
             if qgis_groups.findGroup(item) is None:
                 rsx_group.addGroup(item)
 
-def create_group_fond():
-    """ Creation du groupe FOND dans le projet QGIS ou il y'aura les fonds google sat et google maps
-    """
-    qgis_groups = get_group()
-    group_fond = qgis_groups.addGroup("FOND Google")
-    QgsLayerDefinition.loadLayerDefinition(join(LAYERS_PATH, "google_map.qlr"),QgsProject.instance(),group_fond)
-    QgsLayerDefinition.loadLayerDefinition(join(LAYERS_PATH, "google_sat.qlr"),QgsProject.instance(),group_fond)
 
 def create_layer(to_dir, layer_name):
     """ Creation de couche

@@ -10,7 +10,6 @@ OPERATOR_SUB_DIR = ['PDF', 'SHP', 'TIF', 'POINTS CALAGE']
 SHP_PATH = dirname(__file__).replace('utilities', 'resources/shape')
 QML_PATH = dirname(__file__).replace('utilities', 'resources/qml')
 LOGO_PATH = dirname(__file__).replace('utilities', 'resources/logo_futurmap.png')
-LAYERS_PATH = dirname(__file__).replace('utilities', 'resources/layers')
 PDF_SUB_DIR = ['PAGES A TRAITER', 'PAGES ANNEXES']
 WORKSHEETS = ['Synthèse_exploitants', 'Synthèse_réseaux']
 
@@ -194,38 +193,22 @@ def count_pdf_file(dir_name):
     return nbr_file
 
 
-def count_csv_line(csv_file):
-    """ Compter le nombre de line dans un fichier csv
-
-    :param csv_file: le fichier csv à compter
-    :type csv_file: str
-
-    :return: Le nombre des ligne du fichier
-    :rtype: Integer
-    """
-
-    with open(csv_file) as count_file:
-        csv_reader = csv.reader(count_file)
-        try:
-            row_count = sum(1 for row in csv_reader)
-        except:
-            return 0
-        return row_count
-
-
 def residual_list(gcp_file):
-    """
+    """ Mettre les valuers des residuals dans une liste de valeur
 
-    :param gcp_file:
-    :return:
-    """
+    :param gcp_file: le fichier csv
+    :type gcp_file: str
 
+    :return: liste de valeur
+    :rtype: list
+    """
     with open(gcp_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         residual = []
         for row in csv_reader:
-            if len(row) >= 7:
-                residual.append(row[7])
+            if len(row) >= 7 :
+                if row[4] is not '0' :
+                    residual.append(row[7])
             else:
                 return residual
     return list(map(float, residual[1:]))

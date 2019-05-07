@@ -151,18 +151,25 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
                 worksheet.write_formula(row + i, cell_cord + j,
                                  '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
                                         .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('E') + j),
-                                        chr(ord('E') + j)) % (row + i+ 1),
+                                        chr(ord('E') + j)) % (row + i + 1),
                                         customize_cell_format(None, None, cell_color, workbook))
                 worksheet.write_formula(row + i, cell_cord + 4 + j,
                                  '=SUMIF({}!D9:D9999, $A%d, {}!{}9:{}9999)'
                                         .format(WORKSHEETS[0], WORKSHEETS[0], chr(ord('I') + j),
-                                        chr(ord('I') + j)) % (row + i+ 1),
+                                        chr(ord('I') + j)) % (row + i + 1),
                                         customize_cell_format(None, None, cell_color, workbook))
             else:
-                worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class,0),
+                worksheet.write(row + i, cell_cord + j, length_feature(layer, item_value, item_class, 0),
                                 customize_cell_format(None, None, cell_color, workbook))
-                worksheet.write(row + i, cell_cord + 4 + j, length_feature(layer, item_value, item_class,1),
+                worksheet.write(row + i, cell_cord + 4 + j, length_feature(layer, item_value, item_class, 1),
                                 customize_cell_format(None, None, cell_color, workbook))
+                if worksheet.get_name() == WORKSHEETS[0]:
+                    if item_value in ['ELEC', 'GAZ', 'PC', 'CC']:
+                       worksheet.write_formula(row + i, ord('Q') - 65,
+                                        '=IF(OR($N{0}>0,$O{0}>0),"! RESEAUX SENSIBLES EN CLASSE B OU C !","")'
+                                        .format(row + i + 1),
+                                        customize_cell_format(None, None, cell_color, workbook)
+                                        )
 
         while sum_by_class<3 and col_liner < 9:
             cell_length_class = cell_letter_to_nbr + col_liner
@@ -290,7 +297,9 @@ def export_report_file(workbook, path):
 
     for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
         worksheet = workbook.add_worksheet(item_worksheet)
-        for i_op, layer in enumerate(get_layers_from_folder('SHP')):
+        rsx_layers = [item for item in get_layers_from_folder('SHP') if '_BUF' not in item.name()]
+        print(rsx_layers)
+        for i_op, layer in enumerate(rsx_layers):
             item = layer.name()
             field = layer.dataProvider().fieldNameIndex('Reseau')
             values = sorted(layer.uniqueValues(field))

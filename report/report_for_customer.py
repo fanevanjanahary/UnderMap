@@ -76,8 +76,9 @@ def operators_content(worksheet, workbook):
 
     features = []
     cell_s = 4
-
-    for i, layer in enumerate( get_layers_from_folder('SHP') ):
+    rsx_layers = [item for item in get_layers_from_folder('SHP') if '_BUF' not in item.name()]
+    print(rsx_layers)
+    for i, layer in enumerate(rsx_layers):
         features += [ item_f for item_f in get_features_by_rsx_and_class(layer) ]
 
     for item_f, i in zip(features, range(0, len(features)*4, +4) ):

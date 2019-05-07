@@ -483,14 +483,12 @@ def merge_features_connected(layer, path):
         merge_features_connected(result['OUTPUT'], path)
 
     else:
-
         layer = result['OUTPUT']
         field = layer.dataProvider().fieldNameIndex('Exploitant')
         value = list(layer.uniqueValues(field))[0]
         expr = '"Exploitant" = \'{}\' '.format(value)
         request = QgsFeatureRequest().setFilterExpression(expr)
         features = layer.getFeatures(request)
-
         # change geometry type
         for f in features:
             geom = f.geometry()

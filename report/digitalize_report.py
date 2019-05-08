@@ -54,6 +54,34 @@ def customize_cell_format(top, bottom, color, workbook):
     return cell_format
 
 
+def customize_cell_mean(mean, exploitant, workbook):
+    """ Changer le couleur de la cellule écart moyen
+
+    :param mean: Valeur du moyen
+    :type mean: float
+
+    :param exploitant: Le nom de l'exploitant
+    :type exploitant: str
+
+    :param workbook: Le fichier à écrire
+    :type workbook: Workbook
+   """
+    layer = [item for item in get_layers_from_folder('SHP') if exploitant == item.name()][0]
+    field = layer.dataProvider().fieldNameIndex('Classe')
+    data_class = sorted(layer.uniqueValues(field))
+
+    if mean > 0.15 and 'A' in data_class:
+        return customize_cell_format(1, 1, 'red', workbook)
+    elif mean > 0.30 and 'A' not in data_class and 'B' in data_class:
+        return customize_cell_format(1, 1, 'red', workbook)
+    elif mean > 0.50 and ['A','B'] not in data_class:
+        return customize_cell_format(1, 1, 'red', workbook)
+    elif mean > 0.15 and len(data_class) == 0:
+        return customize_cell_format(1, 1, 'red', workbook)
+    else:
+        return customize_cell_format(1, 1, 'white', workbook)
+
+
 def create_head_content(worksheet, title, header_format, cell, workbook):
     logo = LOGO_PATH
     cell_to_nbr = ord(cell)
@@ -192,7 +220,17 @@ def create_content(worksheet, worksheet_title, cell_header, workbook, row, colum
 
 
 def georeference_report(path, operator_name, row, worksheet, header_format, workbook):
+    """
 
+    :param path:
+    :param operator_name:
+    :param row:
+    :param worksheet:
+    :param header_format:
+    :param workbook:
+    :return:
+    """
+    import numpy as np
     worksheet.merge_range('A{}:A{}'.format(row, row + 1), 'Page', header_format)
     worksheet.merge_range('B{}:B{}'.format(row, row + 1), 'Nombre de points', header_format)
     worksheet.merge_range('C{}:D{}'.format(row, row + 1), 'Methode de calage', header_format)
@@ -262,6 +300,7 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
                                             '=AVERAGE({0}{1}:{0}{2})'.format(cell_mean,
                                                                            row + 2,
                                                                            row+ 1+ len(files_in_tif_path)),
+                                            customize_cell_mean(np.mean(list_of_residual), operator_name, workbook)
                                             )
             else:
                 return
@@ -298,7 +337,6 @@ def export_report_file(workbook, path):
     for i_worksheet, item_worksheet in  enumerate(WORKSHEETS):
         worksheet = workbook.add_worksheet(item_worksheet)
         rsx_layers = [item for item in get_layers_from_folder('SHP') if '_BUF' not in item.name()]
-        print(rsx_layers)
         for i_op, layer in enumerate(rsx_layers):
             item = layer.name()
             field = layer.dataProvider().fieldNameIndex('Reseau')

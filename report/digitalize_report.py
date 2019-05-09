@@ -11,7 +11,7 @@ from UnderMap.definition.definitions import rsx_color
 from UnderMap.utilities.utilities import (
     get_project_path,
     get_elements_name,
-    count_pdf_file,
+    count_elements_in_to_treat,
     residual_list,
     LOGO_PATH,
     WORKSHEETS,
@@ -69,14 +69,23 @@ def customize_cell_mean(mean, exploitant, workbook):
     layer = [item for item in get_layers_from_folder('SHP') if exploitant == item.name()][0]
     field = layer.dataProvider().fieldNameIndex('Classe')
     data_class = sorted(layer.uniqueValues(field))
+    color_degree = ['#ff8633', 'red']
 
-    if mean > 0.15 and 'A' in data_class:
+    if 0.30 > mean > 0.15 and 'A' in data_class:
+        return customize_cell_format(1, 1, '#ff8633', workbook)
+    elif 0.60 > mean > 0.30 and 'A' not in data_class and 'B' in data_class:
+        return customize_cell_format(1, 1, '#ff8633', workbook)
+    elif 1 > mean > 0.50 and ['A','B'] not in data_class:
+        return customize_cell_format(1, 1, '#ff8633', workbook)
+    elif 0.30 > mean > 0.15 and len(data_class) == 0:
+        return customize_cell_format(1, 1, '#ff8633', workbook)
+    elif 0.30 < mean and 'A' in data_class:
         return customize_cell_format(1, 1, 'red', workbook)
-    elif mean > 0.30 and 'A' not in data_class and 'B' in data_class:
+    elif 0.60 < mean and 'A' not in data_class and 'B' in data_class:
         return customize_cell_format(1, 1, 'red', workbook)
-    elif mean > 0.50 and ['A','B'] not in data_class:
+    elif 1 < mean and ['A','B'] not in data_class:
         return customize_cell_format(1, 1, 'red', workbook)
-    elif mean > 0.15 and len(data_class) == 0:
+    elif 0.30 < mean and len(data_class) == 0:
         return customize_cell_format(1, 1, 'red', workbook)
     else:
         return customize_cell_format(1, 1, 'white', workbook)
@@ -282,7 +291,9 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
             if len(list_of_residual) > 0:
                 worksheet.write(row + 1 + i_file_treated, 1, len(residual_list(gcp_file)))
                 worksheet.write(row + 1 + i_file_treated, 4, round(
-                    sum(list_of_residual)/len(list_of_residual), 2))
+                    sum(list_of_residual)/len(list_of_residual), 2),
+                    customize_cell_mean(np.mean(list_of_residual), operator_name, workbook)
+                                )
                 if max(list_of_residual) > 1:
                     worksheet.write(row + 1 + i_file_treated, 5, round(max(list_of_residual), 2),
                                     customize_cell_format(None, None, "red", workbook))
@@ -351,12 +362,12 @@ def export_report_file(workbook, path):
                                                        8 + i_op + position[i_op] + len(values)), '',
                                                            cell_rsx_format)
                     worksheet.merge_range('C{}:C{}'.format(8 + i_op + position[i_op] + 1,
-                                                       8 + i_op + position[i_op] + len(values)), count_pdf_file(item)[0],
+                                                       8 + i_op + position[i_op] + len(values)), count_elements_in_to_treat(item)[0],
                                                         cell_rsx_format)
                 else:
                     worksheet.write(8 + i_op + position[i_op], 0, item, cell_rsx_format)
                     worksheet.write(8 + i_op + position[i_op], 1, '', cell_rsx_format)
-                    worksheet.write(8 + i_op + position[i_op], 2, count_pdf_file(item)[0], cell_rsx_format)
+                    worksheet.write(8 + i_op + position[i_op], 2, count_elements_in_to_treat(item)[0], cell_rsx_format)
 
             if i_worksheet == 1:
                 try:
@@ -365,7 +376,7 @@ def export_report_file(workbook, path):
                      worksheet_rsx = workbook.add_worksheet(item[0:30])
                 last_row = create_content(worksheet_rsx, item, cell_header,
                                           workbook, 8, 'F', values, layer)
-                for i_count_file, item_count_file in enumerate(count_pdf_file(item)[:2]):
+                for i_count_file, item_count_file in enumerate(count_elements_in_to_treat(item)[:2]):
                     worksheet_rsx.write(8, i_count_file + 1, item_count_file)
                 worksheet_rsx.write_formula(8, 3,
                             '=${}%d+${}%d'.format('B', 'C')%(8 + 1, 8 + 1)

@@ -172,7 +172,7 @@ def split_pdf(pdf_file, to_dir):
         pdf_in_file.close()
 
 
-def count_pdf_file(dir_name):
+def count_elements_in_to_treat(dir_name):
     """ Compter les fichiers dans le dossier PDF d'un exploitant d'un RSX
 
     :param dir_name: Le nom de dossier
@@ -187,7 +187,9 @@ def count_pdf_file(dir_name):
     pdf_path_opr = join(operator_path, OPERATOR_SUB_DIR[0])
     for item_dir_pdf in get_elements_name(pdf_path_opr, True, None):
         sub_pdf = join(pdf_path_opr, item_dir_pdf)
-        nbr = len([file for file in os.listdir(sub_pdf) if isfile(join(sub_pdf, file)) and file.endswith(".pdf")])
+        elements = [file.rsplit('.', 1)[0] for file in os.listdir(sub_pdf)
+                    if isfile(join(sub_pdf, file)) and 'xml' not in file]
+        nbr = len(set(elements))
         nbr_file.append(nbr)
 
     return nbr_file

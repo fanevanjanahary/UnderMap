@@ -248,11 +248,9 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
     operator_path = join(path, PROJECT_GROUP[2], operator_name)
     tif_path = join(operator_path, PROJECT_GROUP[3])
     tif_el = get_elements_name(tif_path, False, '.tif')
-    list_tif_replaced = [x.replace("_georef.tif", ".tif") for x in tif_el]
     points = get_elements_name(tif_path, False, '.points')
     pdf_root = join(operator_path, OPERATOR_SUB_DIR[0])
     files_path_to_treat = join(pdf_root, PDF_SUB_DIR[0])
-
     try:
         files_to_treat = get_elements_name(files_path_to_treat, False, '')
     except FileNotFoundError:
@@ -263,12 +261,12 @@ def georeference_report(path, operator_name, row, worksheet, header_format, work
         if exists(join(pdf_root, 'IGNORE')):
             rmdir(join(pdf_root, 'IGNORE'))
 
-    files_in_tif_path = [item for item in files_to_treat if item in list_tif_replaced]
-    files_not_in_tif = [item for item in files_to_treat if item not in list_tif_replaced]
+    files_in_tif_path = [item for item in files_to_treat if item.rsplit(".", 1)[0]+'_georef.tif' in tif_el]
+    files_not_in_tif = [item for item in files_to_treat if 'xml' not in item and
+                        item.rsplit(".", 1)[0]+'_georef.tif' not in tif_el]
     last_row_alerte = len(files_not_in_tif)
     for i_file_treated, item_file_treated in enumerate(files_in_tif_path):
         gcp_file_name = item_file_treated.rsplit(".", 1)[0]+'_georef.tif.points'
-        print(gcp_file_name)
         if gcp_file_name in points:
             gcp_file = join(tif_path, gcp_file_name)
             list_of_residual = residual_list(gcp_file)
